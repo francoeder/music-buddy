@@ -1,10 +1,14 @@
 import { Routes } from '@angular/router';
-import { WelcomeComponent } from './components/welcome/welcome.component';
 import { HomeComponent } from './components/home/home.component';
 import { TrainingRunnerComponent } from './components/runner/training-runner.component';
+import { LoginComponent } from './features/login/login.component';
+import { DashboardComponent } from './features/dashboard/dashboard.component';
+import { AuthGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
-  { path: 'home', component: HomeComponent },
+  { path: '', component: HomeComponent, canActivate: [AuthGuard] },
+  { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
+  { path: 'login', component: LoginComponent },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
   { path: 'run/:id', component: TrainingRunnerComponent }
 ];

@@ -4,3 +4,11 @@
 
 html, body { height: 100%; }
 body { margin: 0; }
+/* User menu panel visual adjustments */
+.user-menu-panel {
+  box-shadow: none !important;
+  border: none !important;
+}
+.user-menu-panel .mat-mdc-menu-content {
+  padding: 0 !important;
+}
