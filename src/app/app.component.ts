@@ -21,7 +21,7 @@ import { Router } from '@angular/router';
         <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="Usuário">
           <mat-icon>account_circle</mat-icon>
         </button>
-        <mat-menu #userMenu="matMenu" class="p-0" xPosition="after" yPosition="below" [overlapTrigger]="false" [panelClass]="'user-menu-panel'">
+        <mat-menu #userMenu="matMenu" [panelClass]="'user-menu-panel'">
           <div class="p-3 w-64" [style.maxHeight.px]="280">
             <div class="flex items-center gap-3">
               <img *ngIf="photoUrl(); else placeholder" [src]="photoUrl()" alt="avatar" class="w-10 h-10 rounded-full border" />

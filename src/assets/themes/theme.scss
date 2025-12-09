@@ -1,0 +1,127 @@
+@use '@angular/material' as mat;
+@use 'sass:map';
+
+// -------------------------------------------------------------
+// 1. COLOR PALETTES
+// -------------------------------------------------------------
+
+$primary-palette: mat.define-palette(mat.$cyan-palette, 500, 600, 700);
+$accent-palette:  mat.define-palette(mat.$light-blue-palette, 400, 500, 600);
+$warn-palette:    mat.define-palette(mat.$red-palette);
+
+// Custom colors consistent with your suggested palette:
+$app-colors: (
+  cyan-sky: #38D6F3,
+  deep-blue: #0E3A59,
+  ocean-blue: #1A73A8,
+  soft-gray: #F5F7FA,
+  warm-gray: #E1E6EB,
+  graphite: #333A40,
+  lime-pulse: #C6F68D,
+  orange-focus: #FF8A47,
+  red-warn: #FF4F5A
+);
+
+// -------------------------------------------------------------
+// 2. THEME DEFINITION
+// -------------------------------------------------------------
+
+$guitar-app-theme: mat.define-light-theme((
+  color: (
+    primary: $primary-palette,
+    accent: $accent-palette,
+    warn:   $warn-palette
+  ),
+  typography: (
+    html-font-size: 16px,
+    font-family: 'Inter, Roboto, Helvetica, sans-serif',
+    headline-1: mat.define-typography-level(96px, 96px, 300),
+    headline-2: mat.define-typography-level(60px, 60px, 300),
+    headline-3: mat.define-typography-level(48px, 48px, 400),
+    headline-4: mat.define-typography-level(34px, 34px, 400),
+    headline-5: mat.define-typography-level(24px, 24px, 400),
+    headline-6: mat.define-typography-level(20px, 20px, 500),
+    subtitle-1: mat.define-typography-level(16px, 24px, 400),
+    subtitle-2: mat.define-typography-level(14px, 20px, 500),
+    body-1:     mat.define-typography-level(16px, 24px, 400),
+    body-2:     mat.define-typography-level(14px, 20px, 400),
+    button:     mat.define-typography-level(14px, 14px, 500),
+    caption:    mat.define-typography-level(12px, 20px, 400)
+  ),
+  density: 0
+));
+
+// Applies theme to all Angular Material components
+@include mat.all-component-themes($guitar-app-theme);
+
+// -------------------------------------------------------------
+// 3. GLOBAL OVERRIDES
+// -------------------------------------------------------------
+
+// Background color for the entire app
+body {
+  background-color: map.get($app-colors, soft-gray);
+  color: map.get($app-colors, graphite);
+  font-family: 'Inter', sans-serif;
+}
+
+// Toolbar
+.mat-toolbar {
+  background-color: map.get($app-colors, deep-blue) !important;
+  color: white !important;
+}
+
+// Cards
+.mat-card {
+  background-color: white;
+  border-radius: 16px;
+  padding: 16px;
+
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
+}
+
+// Buttons
+.mat-mdc-raised-button.mat-primary {
+  background-color: map.get($app-colors, ocean-blue) !important;
+  color: white !important;
+}
+
+.mat-mdc-raised-button.play {
+  // Highlight for play button (orange-focus)
+  background-color: map.get($app-colors, orange-focus) !important;
+  color: white !important;
+}
+
+// Inputs
+.mdc-text-field--outlined {
+  --mdc-outlined-text-field-focus-outline-color: #{map.get($app-colors, cyan-sky)};
+}
+
+// Tabs / Carousel indicators
+.carousel-indicator-active {
+  background-color: map.get($app-colors, ocean-blue);
+}
+
+.carousel-indicator {
+  background-color: map.get($app-colors, warm-gray);
+}
+
+// BPM Pulse Indicator
+.bpm-pulse {
+  background-color: map.get($app-colors, lime-pulse);
+  border-radius: 50%;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: map.get($app-colors, graphite);
+}
+
+// Panels / Dialogs
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  border-radius: 18px !important;
+}
+// Core styles (ripples, overlay, typography baseline)
+@include mat.core();
