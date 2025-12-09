@@ -37,7 +37,7 @@ type MediaType = 'image' | 'iframe' | 'none';
           <div *ngSwitchCase="'image'" class="flex-1 min-h-0 w-full h-full p-[25px] flex items-center justify-center overflow-hidden">
             <img [src]="current()?.resourceLink" [alt]="current()?.title || 'Exercise image'" class="block max-w-full max-h-full object-contain m-auto" />
           </div>
-          <iframe *ngSwitchCase="'iframe'" [src]="current()?.resourceLink | safeResource" class="w-full h-full"></iframe>
+          <iframe *ngSwitchCase="'iframe'" [src]="resolveMediaSrc(current()?.resourceLink) | safeResource" class="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           <div *ngSwitchDefault class="text-gray-400">No media</div>
         </ng-container>
       </div>
@@ -118,6 +118,49 @@ export class TrainingRunnerComponent implements OnInit {
     if (!link) return 'none';
     if (link.startsWith('data:image') || /\.(jpeg|jpg|png|webp)$/i.test(link)) return 'image';
     return 'iframe';
+  }
+
+  resolveMediaSrc(link?: string): string {
+    if (!link) return '';
+    if (this.isYouTubeLink(link)) {
+      const embed = this.toYouTubeEmbed(link);
+      return embed || link;
+    }
+    return link;
+  }
+
+  private isYouTubeLink(link: string): boolean {
+    try {
+      const u = new URL(link);
+      return /(^|\.)youtube\.com$/i.test(u.hostname) || /(^|\.)youtu\.be$/i.test(u.hostname);
+    } catch {
+      return /youtube\.com|youtu\.be/i.test(link);
+    }
+  }
+
+  private toYouTubeEmbed(link: string): string | null {
+    try {
+      const u = new URL(link);
+      const host = u.hostname;
+      if (/(^|\.)youtube\.com$/i.test(host)) {
+        if (u.pathname.startsWith('/embed/')) return link;
+        const vid = u.searchParams.get('v');
+        if (vid) return `https://www.youtube.com/embed/${vid}`;
+        const m = u.pathname.match(/\/shorts\/([\w-]+)/i);
+        if (m) return `https://www.youtube.com/embed/${m[1]}`;
+      }
+      if (/(^|\.)youtu\.be$/i.test(host)) {
+        const id = u.pathname.replace(/^\//, '');
+        if (id) return `https://www.youtube.com/embed/${id}`;
+      }
+      return null;
+    } catch {
+      const be = link.match(/youtu\.be\/([\w-]+)/i);
+      if (be) return `https://www.youtube.com/embed/${be[1]}`;
+      const yt = link.match(/[?&]v=([\w-]+)/i);
+      if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+      return null;
+    }
   }
 
   back() {
