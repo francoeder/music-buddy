@@ -37,7 +37,7 @@ type MediaType = 'image' | 'iframe' | 'none';
           <div *ngSwitchCase="'image'" class="flex-1 min-h-0 w-full h-full p-[25px] flex items-center justify-center overflow-hidden">
             <img [src]="current()?.resourceLink" [alt]="current()?.title || 'Exercise image'" class="block max-w-full max-h-full object-contain m-auto" />
           </div>
-          <iframe *ngSwitchCase="'iframe'" [src]="resolveMediaSrc(current()?.resourceLink) | safeResource" class="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <iframe *ngSwitchCase="'iframe'" [src]="resolveMediaSrc(current()?.resourceLink) | safeResource" [attr.id]="videoIframeId()" class="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           <div *ngSwitchDefault class="text-gray-400">No media</div>
         </ng-container>
         <div *ngIf="isVideoCurrent() && replayOverlay()" class="absolute inset-0 bg-black/100 flex items-center justify-center z-10">
@@ -47,7 +47,7 @@ type MediaType = 'image' | 'iframe' | 'none';
 
       <div class="p-3 bg-white border-t shrink-0">
         <div class="flex items-center justify-center space-x-6">
-          <button mat-raised-button (click)="prev()">
+          <button mat-raised-button (click)="prev()" [disabled]="isFirst()">
             <mat-icon>skip_previous</mat-icon>
             Previous
           </button>
@@ -58,8 +58,8 @@ type MediaType = 'image' | 'iframe' | 'none';
           <button mat-raised-button class="relative overflow-visible" (click)="nextOrFinish()">
             <mat-icon>{{ isLast() ? 'check' : 'skip_next' }}</mat-icon>
             {{ isLast() ? 'Finish' : 'Next' }}
-            <span *ngIf="nextHint() && (isLast() || !autoplay())" class="pointer-events-none absolute -inset-1 hint-ring ring-2 ring-sky-500 animate-ping"></span>
-            <span *ngIf="nextHint() && (isLast() || !autoplay())" class="pointer-events-none absolute -inset-1 hint-ring ring-2 ring-sky-400"></span>
+            <span *ngIf="nextHint() && (isLast() || !autoplay() || isVideoCurrent())" class="pointer-events-none absolute -inset-1 hint-ring ring-2 ring-sky-500 animate-ping"></span>
+            <span *ngIf="nextHint() && (isLast() || !autoplay() || isVideoCurrent())" class="pointer-events-none absolute -inset-1 hint-ring ring-2 ring-sky-400"></span>
           </button>
         </div>
         <div class="mt-4 text-center text-2xl" [class.hidden]="isVideoCurrent()">
@@ -108,7 +108,7 @@ export class TrainingRunnerComponent implements OnInit {
     });
     this.route.queryParamMap.subscribe(q => {
       const a = q.get('autoplay');
-      this.autoplay.set(a === '1' || a === 'true');
+      this.autoplay.set(a === null ? true : (a === '1' || a === 'true'));
     });
   }
 
@@ -166,11 +166,14 @@ export class TrainingRunnerComponent implements OnInit {
         addParam('autoplay', '1');
         addParam('playsinline', '1');
         addParam('enablejsapi', '1');
+        try { addParam('origin', window.location.origin); } catch {}
       } else if (provider === 'vimeo') {
         addParam('autoplay', '1');
         addParam('playsinline', '1');
+        addParam('api', '1');
       } else if (provider === 'dailymotion') {
         addParam('autoplay', '1');
+        addParam('api', 'postMessage');
       } else if (provider === 'facebook') {
         addParam('autoplay', '1');
       }
@@ -178,8 +181,8 @@ export class TrainingRunnerComponent implements OnInit {
     } catch {
       const sep = src.includes('?') ? '&' : '?';
       if (provider === 'youtube') return `${src}${sep}autoplay=1&playsinline=1&enablejsapi=1`;
-      if (provider === 'vimeo') return `${src}${sep}autoplay=1&playsinline=1`;
-      if (provider === 'dailymotion') return `${src}${sep}autoplay=1`;
+      if (provider === 'vimeo') return `${src}${sep}autoplay=1&playsinline=1&api=1`;
+      if (provider === 'dailymotion') return `${src}${sep}autoplay=1&api=postMessage`;
       if (provider === 'facebook') return `${src}${sep}autoplay=1`;
       return src;
     }
@@ -353,6 +356,10 @@ export class TrainingRunnerComponent implements OnInit {
     return !!this.training && this.index() >= this.training.exercises.length - 1;
   }
 
+  isFirst() {
+    return !this.training || this.index() <= 0;
+  }
+
   nextOrFinish() {
     if (this.isLast()) {
       this.nextHint.set(false);
@@ -386,21 +393,25 @@ export class TrainingRunnerComponent implements OnInit {
         clearInterval(this.timerId);
         this.metro.stop();
         if (this.isVideoCurrent()) {
-          this.replayOverlay.set(true);
           this.nextHint.set(true);
           return;
         }
         if (this.autoplay() && this.training && this.index() + 1 < this.training.exercises.length) {
           const nextEx = this.nextExercise();
           const nextLink = nextEx?.resourceLink;
-          if (this.mediaType(nextLink) === 'iframe') {
-            this.nextHint.set(true);
+          const nextIsVideo = this.mediaType(nextLink) === 'iframe';
+          const breakSecRaw = ex.breakSeconds ?? 0;
+          if (breakSecRaw <= 0) {
+            this.isPrep.set(false);
+            this.shouldAutoplay.set(nextIsVideo);
+            this.index.set(this.index() + 1);
+            this.resetTimer();
+            this.nextHint.set(false);
             return;
           }
-          const breakSecRaw = ex.breakSeconds ?? 0;
-          const breakSec = breakSecRaw > 0 ? Math.max(breakSecRaw, 5) : 5;
+          const breakSec = Math.max(breakSecRaw, 5);
           this.isPrep.set(true);
-          this.prepPhase.set(breakSecRaw > 0 ? 'rest' : 'prep');
+          this.prepPhase.set('rest');
           this.prepTargetIndex.set(this.index() + 1);
           this.prepRemaining.set(breakSec);
           if (this.prepTimerId) clearInterval(this.prepTimerId);
@@ -409,8 +420,8 @@ export class TrainingRunnerComponent implements OnInit {
           this.prepTimerId = setInterval(() => {
             const r2 = this.prepRemaining();
             if (!metroStartedForPrep && r2 === 5) {
-              const nextEx = this.nextExercise();
-              const nbpm = nextEx?.bpm ?? 0;
+              const nextEx2 = this.nextExercise();
+              const nbpm = nextEx2?.bpm ?? 0;
               if (nbpm > 0) {
                 if (this.metro.isPlaying()) {
                   if (this.metro.currentBpm() !== nbpm) {
@@ -423,25 +434,30 @@ export class TrainingRunnerComponent implements OnInit {
               } else {
                 this.metro.stop();
               }
-          this.prepPhase.set('prep');
-          metroStartedForPrep = true;
-        }
-        if (r2 > 0) {
-          this.prepRemaining.set(r2 - 1);
-        } else {
-          clearInterval(this.prepTimerId);
-          this.isPrep.set(false);
-          this.shouldAutoplay.set(true);
-          this.index.set(this.index() + 1);
-          this.resetTimer();
-        }
-      }, 1000);
+              this.prepPhase.set('prep');
+              metroStartedForPrep = true;
+            }
+            if (r2 > 0) {
+              this.prepRemaining.set(r2 - 1);
+            } else {
+              clearInterval(this.prepTimerId);
+              this.isPrep.set(false);
+              const nextLink2 = this.nextExercise()?.resourceLink;
+              const nextIsVideo2 = this.mediaType(nextLink2) === 'iframe';
+              this.shouldAutoplay.set(nextIsVideo2);
+              this.index.set(this.index() + 1);
+              this.resetTimer();
+            }
+          }, 1000);
           this.nextHint.set(false);
         } else {
           this.nextHint.set(true);
         }
       }
     }, 1000);
+    if (this.isYouTubeLink(ex.resourceLink ?? '')) {
+      setTimeout(() => this.setupYouTubeBridge(), 600);
+    }
 
     const bpm = ex.bpm;
     if (this.isVideoCurrent()) {
@@ -480,6 +496,60 @@ export class TrainingRunnerComponent implements OnInit {
       const sep = src.includes('?') ? '&' : '?';
       return `${src}${sep}gbt=${this.reloadToken()}`;
     }
+  }
+
+  videoIframeId() {
+    return `gb-video-${this.index()}`;
+  }
+
+  @HostListener('window:message', ['$event'])
+  onVideoMessage(ev: MessageEvent) {
+    const origin = String(ev.origin || '');
+    const data = typeof ev.data === 'string' ? this.tryParse(ev.data) : ev.data;
+    if (!this.isVideoCurrent()) return;
+    if (!data) return;
+    if (/youtube\-nocookie\.com|youtube\.com/i.test(origin)) {
+      if (data.event === 'onStateChange' && data.info === 0) {
+        this.replayOverlay.set(true);
+        this.nextHint.set(true);
+      }
+      if (data.event === 'infoDelivery' && data.info && typeof data.info.playerState === 'number' && data.info.playerState === 0) {
+        this.replayOverlay.set(true);
+        this.nextHint.set(true);
+      }
+    } else if (/vimeo\.com/i.test(origin)) {
+      if (data.event === 'ended' || data.event === 'finish') {
+        this.replayOverlay.set(true);
+      }
+    } else if (/dailymotion\.com|dai\.ly/i.test(origin)) {
+      if (data.event === 'ended' || data.type === 'ended') {
+        this.replayOverlay.set(true);
+      }
+    }
+  }
+
+  private tryParse(x: string) {
+    try { return JSON.parse(x); } catch { return null; }
+  }
+
+  private setupYouTubeBridge() {
+    const id = this.videoIframeId();
+    const el = document.getElementById(id) as HTMLIFrameElement | null;
+    if (!el) return;
+    const link = this.current()?.resourceLink ?? '';
+    if (!this.isYouTubeLink(link)) return;
+    const origin = el.src.includes('youtube-nocookie.com') ? 'https://www.youtube-nocookie.com' : 'https://www.youtube.com';
+    const post = (payload: any) => el.contentWindow?.postMessage(JSON.stringify(payload), origin);
+    let tries = 0;
+    const tryRegister = () => {
+      tries++;
+      post({ event: 'listening', id });
+      post({ event: 'addEventListener', id, func: 'onStateChange' });
+      post({ event: 'addEventListener', id, func: 'onReady' });
+      post({ event: 'addEventListener', id, func: 'infoDelivery' });
+      if (tries < 5) setTimeout(tryRegister, 500);
+    };
+    tryRegister();
   }
 
   private startPrep(seconds = 5) {
