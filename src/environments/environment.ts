@@ -1,11 +1,11 @@
 export const environment = {
   firebase: {
-    apiKey: "AIzaSyBtUhAQZPRCq4j0_pLI6wDhIC1vBcxCLJk",
-    authDomain: "the-guitar-buddy.firebaseapp.com",
-    projectId: "the-guitar-buddy",
-    storageBucket: "the-guitar-buddy.firebasestorage.app",
-    messagingSenderId: "569419885138",
-    appId: "1:569419885138:web:20b9a2ddb2d07137da8d8b",
-    measurementId: "G-MJCVBLPDZ9"
+    apiKey: "AIzaSyAbLPaX6qbwjL8iED1ON0R-vVJcIdysFPQ",
+    authDomain: "music-buddy-30f67.firebaseapp.com",
+    projectId: "music-buddy-30f67",
+    storageBucket: "music-buddy-30f67.firebasestorage.app",
+    messagingSenderId: "866084291800",
+    appId: "1:866084291800:web:faa4f632512d0521e143ad",
+    measurementId: "G-0FWF71QHZ4"
   }
 };

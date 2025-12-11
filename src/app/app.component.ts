@@ -16,7 +16,7 @@ import { Router } from '@angular/router';
   template: `
     <div class="min-h-screen flex flex-col">
       <mat-toolbar *ngIf="!isRunnerRoute()" color="primary" class="sticky top-0 z-10">
-        <img src="assets/images/music-buddy-avatar.png" alt="Guitar Buddy" class="w-8 h-8 mr-2 rounded" />
+        <img src="assets/images/music-buddy-avatar.png" alt="Music Buddy" class="w-8 h-8 mr-2 rounded" />
         <span class="font-semibold app-title">{{ 'app.title' | translate }}</span>
         <button mat-icon-button class="ml-1 mobile-only" [matMenuTriggerFor]="mobileMenu" aria-label="Menu">
           <mat-icon>menu</mat-icon>

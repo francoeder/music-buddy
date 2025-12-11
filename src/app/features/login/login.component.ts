@@ -17,8 +17,8 @@ import { TranslateModule } from '@ngx-translate/core';
         <div class="grid md:grid-cols-2 h-full">
           <div class="relative flex items-center justify-center h-full px-8 py-10 md:py-16 text-white bg-gradient-to-br from-[#0E3A59] to-[#1A73A8]">
             <div class="absolute top-6 left-6 flex items-center gap-2">
-              <img src="assets/images/music-buddy-avatar.png" alt="Guitar Buddy" class="w-8 h-8 rounded" />
-              <span class="font-medium">Guitar Buddy</span>
+              <img src="assets/images/music-buddy-avatar.png" alt="Music Buddy" class="w-8 h-8 rounded" />
+              <span class="font-medium">Music Buddy</span>
             </div>
             <div class="max-w-md text-center">
               <div class="text-sm opacity-80">Nice to see you again</div>
