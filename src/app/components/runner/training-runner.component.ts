@@ -393,7 +393,9 @@ export class TrainingRunnerComponent implements OnInit {
         clearInterval(this.timerId);
         this.metro.stop();
         if (this.isVideoCurrent()) {
-          this.nextHint.set(true);
+          if (!(this.autoplay() && total === 0)) {
+            this.nextHint.set(true);
+          }
           return;
         }
         if (this.autoplay() && this.training && this.index() + 1 < this.training.exercises.length) {
@@ -410,17 +412,26 @@ export class TrainingRunnerComponent implements OnInit {
             return;
           }
           const breakSec = Math.max(breakSecRaw, 5);
+          const targetIdx = this.index() + 1;
+          const nextLinkPrepInit = this.training?.exercises[targetIdx]?.resourceLink;
+          const nextIsImagePrepInit = this.mediaType(nextLinkPrepInit) === 'image';
+          const initialPrepPhase = (breakSecRaw <= 5) && nextIsImagePrepInit;
           this.isPrep.set(true);
-          this.prepPhase.set('rest');
-          this.prepTargetIndex.set(this.index() + 1);
+          this.prepPhase.set(initialPrepPhase ? 'prep' : 'rest');
+          this.prepTargetIndex.set(targetIdx);
           this.prepRemaining.set(breakSec);
+          if (initialPrepPhase) {
+            this.index.set(targetIdx);
+            this.shouldAutoplay.set(false);
+          }
           if (this.prepTimerId) clearInterval(this.prepTimerId);
           this.metro.stop();
           let metroStartedForPrep = false;
           this.prepTimerId = setInterval(() => {
             const r2 = this.prepRemaining();
             if (!metroStartedForPrep && r2 === 5) {
-              const nextEx2 = this.nextExercise();
+              const targetIdx = this.prepTargetIndex();
+              const nextEx2 = typeof targetIdx === 'number' ? this.training?.exercises[targetIdx] : this.nextExercise();
               const nbpm = nextEx2?.bpm ?? 0;
               if (nbpm > 0) {
                 if (this.metro.isPlaying()) {
@@ -435,6 +446,13 @@ export class TrainingRunnerComponent implements OnInit {
                 this.metro.stop();
               }
               this.prepPhase.set('prep');
+              // Swap visual to next exercise image when Get Ready appears
+              const nextLinkPrep = typeof targetIdx === 'number' ? this.training?.exercises[targetIdx]?.resourceLink : undefined;
+              const nextIsImagePrep = this.mediaType(nextLinkPrep) === 'image';
+              if (nextIsImagePrep && typeof targetIdx === 'number') {
+                this.index.set(targetIdx);
+                this.shouldAutoplay.set(false);
+              }
               metroStartedForPrep = true;
             }
             if (r2 > 0) {
@@ -442,10 +460,15 @@ export class TrainingRunnerComponent implements OnInit {
             } else {
               clearInterval(this.prepTimerId);
               this.isPrep.set(false);
-              const nextLink2 = this.nextExercise()?.resourceLink;
+              const targetIdx2 = this.prepTargetIndex();
+              const nextLink2 = typeof targetIdx2 === 'number' ? this.training?.exercises[targetIdx2]?.resourceLink : this.nextExercise()?.resourceLink;
               const nextIsVideo2 = this.mediaType(nextLink2) === 'iframe';
               this.shouldAutoplay.set(nextIsVideo2);
-              this.index.set(this.index() + 1);
+              if (typeof targetIdx2 === 'number') {
+                this.index.set(targetIdx2);
+              } else {
+                this.index.set(this.index() + 1);
+              }
               this.resetTimer();
             }
           }, 1000);
@@ -508,22 +531,27 @@ export class TrainingRunnerComponent implements OnInit {
     const data = typeof ev.data === 'string' ? this.tryParse(ev.data) : ev.data;
     if (!this.isVideoCurrent()) return;
     if (!data) return;
+    const ex = this.current();
+    const totalDur = ((ex?.durationMinutes ?? 0) * 60) + (ex?.durationSeconds ?? 0);
+    const shouldHintOnOverlay = this.autoplay() && totalDur === 0;
     if (/youtube\-nocookie\.com|youtube\.com/i.test(origin)) {
       if (data.event === 'onStateChange' && data.info === 0) {
         this.replayOverlay.set(true);
-        this.nextHint.set(true);
+        if (shouldHintOnOverlay) this.nextHint.set(true);
       }
       if (data.event === 'infoDelivery' && data.info && typeof data.info.playerState === 'number' && data.info.playerState === 0) {
         this.replayOverlay.set(true);
-        this.nextHint.set(true);
+        if (shouldHintOnOverlay) this.nextHint.set(true);
       }
     } else if (/vimeo\.com/i.test(origin)) {
       if (data.event === 'ended' || data.event === 'finish') {
         this.replayOverlay.set(true);
+        if (shouldHintOnOverlay) this.nextHint.set(true);
       }
     } else if (/dailymotion\.com|dai\.ly/i.test(origin)) {
       if (data.event === 'ended' || data.type === 'ended') {
         this.replayOverlay.set(true);
+        if (shouldHintOnOverlay) this.nextHint.set(true);
       }
     }
   }
