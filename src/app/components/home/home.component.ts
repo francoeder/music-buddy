@@ -10,22 +10,23 @@ import { AuthService } from '../../core/services/auth.service';
 import { Training } from '../../models/training.model';
 import { ConfirmDialogComponent } from '../dialog/confirm-dialog.component';
 import { TopRecentTrainingsComponent } from './top-recent-trainings.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatDialogModule, TopRecentTrainingsComponent],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatDialogModule, TopRecentTrainingsComponent, TranslateModule],
   template: `
     <div class="p-6">
       <app-top-recent-trainings></app-top-recent-trainings>
       <div class="mt-6 px-6 flex flex-wrap items-center gap-3 sm:gap-2 justify-center sm:justify-start">
         <button mat-raised-button color="primary" class="flex items-center gap-2" (click)="goToTrainings()">
           <mat-icon>library_music</mat-icon>
-          View all trainings
+          {{ 'home.viewAllTrainings' | translate }}
         </button>
         <button mat-stroked-button class="flex items-center gap-2" (click)="create()">
           <mat-icon>add</mat-icon>
-          Create new training
+          {{ 'home.createNewTraining' | translate }}
         </button>
       </div>
     </div>

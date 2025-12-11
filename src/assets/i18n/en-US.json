@@ -1,0 +1,38 @@
+{
+  "app": {
+    "title": "Guitar Buddy"
+  },
+  "nav": {
+    "home": "Home",
+    "trainings": "Trainings",
+    "availableTrainings": "Available Trainings",
+    "createTraining": "Create New Training"
+  },
+  "user": {
+    "label": "User",
+    "logout": "Logout",
+    "email": "Email"
+  },
+  "notifications": {
+    "none": "No notifications"
+  },
+  "home": {
+    "viewAllTrainings": "View all trainings",
+    "createNewTraining": "Create new training",
+    "lastTrainings": "Your last trainings",
+    "exercises": "Exercises",
+    "active": "Active",
+    "inactive": "Inactive",
+    "edit": "Edit",
+    "play": "Play",
+    "noRecentRuns": "No recent runs."
+  },
+  "login": {
+    "title": "Sign In",
+    "google": "Sign in with Google"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "logout": "Logout"
+  }
+}

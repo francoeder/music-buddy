@@ -5,32 +5,44 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from './core/services/auth.service';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, MatToolbarModule, MatButtonModule, MatIconModule, MatMenuModule],
+  imports: [CommonModule, RouterOutlet, RouterLink, MatToolbarModule, MatButtonModule, MatIconModule, MatMenuModule, TranslateModule],
   template: `
     <div class="min-h-screen flex flex-col">
       <mat-toolbar *ngIf="!isRunnerRoute()" color="primary" class="sticky top-0 z-10">
         <img src="assets/images/music-buddy-avatar.png" alt="Guitar Buddy" class="w-8 h-8 mr-2 rounded" />
-        <span class="font-semibold">Guitar Buddy</span>
-        <button mat-button class="ml-3" routerLink="/home"><mat-icon>home</mat-icon> Home</button>
-        <button mat-button class="ml-1" [matMenuTriggerFor]="trainingsMenu"><mat-icon>library_music</mat-icon> Trainings</button>
+        <span class="font-semibold">{{ 'app.title' | translate }}</span>
+        <button mat-button class="ml-3" routerLink="/home"><mat-icon>home</mat-icon> {{ 'nav.home' | translate }}</button>
+        <button mat-button class="ml-1" [matMenuTriggerFor]="trainingsMenu"><mat-icon>library_music</mat-icon> {{ 'nav.trainings' | translate }}</button>
         <span class="flex-1"></span>
         <mat-menu #trainingsMenu="matMenu">
           <button mat-menu-item routerLink="/trainings">
             <mat-icon>list</mat-icon>
-            Available Trainings
+            {{ 'nav.availableTrainings' | translate }}
           </button>
           <button mat-menu-item (click)="createTraining()">
             <mat-icon>add</mat-icon>
-            Create New Training
+            {{ 'nav.createTraining' | translate }}
           </button>
         </mat-menu>
         <div class="flex items-center gap-2">
+          <button mat-button [matMenuTriggerFor]="languageMenu" aria-label="Language" class="p-0 h-auto min-w-0">
+            <img [src]="flagIcon()" alt="lang" class="w-8 h-8 rounded-sm" />
+          </button>
+          <mat-menu #languageMenu="matMenu">
+            <button mat-menu-item (click)="setLanguage('en-US')">
+              <img src="assets/flags/us.png" alt="English" class="w-6 h-6 mr-2 inline-block" /> English
+            </button>
+            <button mat-menu-item (click)="setLanguage('pt-BR')">
+              <img src="assets/flags/br.png" alt="Português" class="w-6 h-6 mr-2 inline-block" /> Português
+            </button>
+          </mat-menu>
           <button mat-icon-button [matMenuTriggerFor]="notificationsMenu" aria-label="Notifications">
             <mat-icon>notifications</mat-icon>
           </button>
@@ -65,21 +77,21 @@ import { Router } from '@angular/router';
                 <mat-icon>person</mat-icon>
               </ng-template>
               <div class="flex flex-col">
-                <span class="font-medium">{{ displayName() || 'User' }}</span>
+                <span class="font-medium">{{ displayName() || ('user.label' | translate) }}</span>
                 <span class="text-sm text-gray-600">{{ email() || '—' }}</span>
               </div>
             </div>
             <div class="mt-3 flex justify-end">
               <button mat-stroked-button color="primary" (click)="onLogout()">
                 <mat-icon>logout</mat-icon>
-                Logout
+                {{ 'user.logout' | translate }}
               </button>
             </div>
           </div>
         </mat-menu>
         <mat-menu #notificationsMenu="matMenu">
           <div class="p-3 w-64">
-            <div class="text-sm text-gray-600">No notifications</div>
+            <div class="text-sm text-gray-600">{{ 'notifications.none' | translate }}</div>
           </div>
         </mat-menu>
       </mat-toolbar>
@@ -92,6 +104,7 @@ import { Router } from '@angular/router';
 export class AppComponent {
   private router = inject(Router);
   private auth = inject(AuthService);
+  private translate = inject(TranslateService);
   displayName = () => this.auth.user()?.displayName ?? null;
   email = () => this.auth.user()?.email ?? null;
   photoUrl = () => this.auth.user()?.photoURL ?? null;
@@ -102,6 +115,22 @@ export class AppComponent {
     if (em) return em.split('@')[0];
     return null;
   };
+  constructor() {
+    this.translate.addLangs(['en-US', 'pt-BR']);
+    this.translate.setDefaultLang('en-US');
+    const saved = localStorage.getItem('lang') || 'en-US';
+    this.translate.use(saved);
+  }
+  currentLang() {
+    return this.translate.currentLang || 'en-US';
+  }
+  flagIcon() {
+    return this.currentLang() === 'pt-BR' ? 'assets/flags/br.png' : 'assets/flags/us.png';
+  }
+  setLanguage(lang: string) {
+    this.translate.use(lang);
+    localStorage.setItem('lang', lang);
+  }
   async onLogout() {
     await this.auth.logout();
     await this.router.navigateByUrl('/login');

@@ -5,20 +5,21 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, TranslateModule],
   template: `
     <div class="p-4">
       <mat-card class="p-6 space-y-4">
-        <h2 class="text-xl font-semibold">Dashboard</h2>
-        <p>Email: {{ email() || '—' }}</p>
+        <h2 class="text-xl font-semibold">{{ 'dashboard.title' | translate }}</h2>
+        <p>{{ 'user.email' | translate }}: {{ email() || '—' }}</p>
         <div>
           <button mat-stroked-button color="primary" class="mr-2" (click)="onLogout()">
             <mat-icon>logout</mat-icon>
-            Logout
+            {{ 'dashboard.logout' | translate }}
           </button>
         </div>
       </mat-card>
