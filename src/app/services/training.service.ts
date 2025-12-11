@@ -2,7 +2,7 @@ import { Injectable, inject, signal, effect } from '@angular/core';
 import { Training } from '../models/training.model';
 import { FIREBASE_DB } from '../app.config';
 import { AuthService } from '../core/services/auth.service';
-import { type Firestore, collection, doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
+import { type Firestore, collection, doc, onSnapshot, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 
 @Injectable({ providedIn: 'root' })
 export class TrainingService {
@@ -36,6 +36,16 @@ export class TrainingService {
 
   getById(id: string) {
     return this.trainingsSignal().find(t => t._id === id);
+  }
+
+  async getByIdOnce(id: string): Promise<Training | null> {
+    const user = this.auth.user();
+    if (!user) return null;
+    const ref = doc(this.db, 'users', user.uid, 'trainings', id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    const data = snap.data() as Omit<Training, '_id'>;
+    return { _id: id, ...data };
   }
 
   async save(training: Training) {

@@ -9,9 +9,23 @@ export class MetronomeService {
   private nextTickTime = 0;
   private schedulerId?: number;
 
-  start(bpm: number) {
+  async unlock(): Promise<void> {
+    if (!this.audioCtx) {
+      this.audioCtx = new AudioContext();
+    }
+    if (this.audioCtx.state === 'suspended') {
+      try {
+        await this.audioCtx.resume();
+      } catch {}
+    }
+  }
+
+  async start(bpm: number) {
     if (bpm <= 0) return;
     if (!this.audioCtx) this.audioCtx = new AudioContext();
+    if (this.audioCtx.state === 'suspended') {
+      try { await this.audioCtx.resume(); } catch {}
+    }
     this.currentBpm.set(bpm);
     this.isPlaying.set(true);
     this.nextTickTime = (this.audioCtx as AudioContext).currentTime + 0.05;
@@ -27,8 +41,8 @@ export class MetronomeService {
     }
   }
 
-  toggle(bpm: number) {
-    if (this.isPlaying()) this.stop(); else this.start(bpm);
+  async toggle(bpm: number) {
+    if (this.isPlaying()) this.stop(); else await this.start(bpm);
   }
 
   private scheduler() {

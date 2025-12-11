@@ -1,6 +1,7 @@
-import { Component, inject, signal, OnInit, HostListener } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 import { TrainingService } from '../../services/training.service';
 import { Training, Exercise } from '../../models/training.model';
 import { SafeResourcePipe } from '../../pipes/safe-resource.pipe';
@@ -58,8 +59,8 @@ type MediaType = 'image' | 'iframe' | 'none';
           <button mat-raised-button class="relative overflow-visible" (click)="nextOrFinish()">
             <mat-icon>{{ isLast() ? 'check' : 'skip_next' }}</mat-icon>
             {{ isLast() ? 'Finish' : 'Next' }}
-            <span *ngIf="nextHint() && (isLast() || !autoplay() || isVideoCurrent())" class="pointer-events-none absolute -inset-1 hint-ring ring-2 ring-sky-500 animate-ping"></span>
-            <span *ngIf="nextHint() && (isLast() || !autoplay() || isVideoCurrent())" class="pointer-events-none absolute -inset-1 hint-ring ring-2 ring-sky-400"></span>
+            <span *ngIf="nextHint() && (isVideoCurrent() ? replayOverlay() : (isLast() || !autoplay()))" class="pointer-events-none absolute -inset-1 hint-ring rounded-full ring-2 ring-sky-500 animate-ping"></span>
+            <span *ngIf="nextHint() && (isVideoCurrent() ? replayOverlay() : (isLast() || !autoplay()))" class="pointer-events-none absolute -inset-1 hint-ring rounded-full ring-2 ring-sky-400"></span>
           </button>
         </div>
         <div class="mt-4 text-center text-2xl" [class.hidden]="isVideoCurrent()">
@@ -77,10 +78,11 @@ type MediaType = 'image' | 'iframe' | 'none';
     `.mat-mdc-raised-button.play-btn.mat-mdc-button-disabled .mdc-button__label { color: #37474f !important; }`
   ]
 })
-export class TrainingRunnerComponent implements OnInit {
+export class TrainingRunnerComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private svc = inject(TrainingService);
+  private auth = inject(AuthService);
   metro = inject(MetronomeService);
 
   training?: Training;
@@ -101,15 +103,42 @@ export class TrainingRunnerComponent implements OnInit {
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
       const id = params.get('id') as string;
-      this.training = this.svc.getById(id);
-      this.index.set(0);
-      this.startPrep(5);
-      this.lockLandscape();
+      const applyTraining = (t?: Training | null) => {
+        if (!t) {
+          this.training = undefined;
+          this.router.navigate(['/']);
+          return;
+        }
+        this.training = t;
+        this.index.set(0);
+        this.startPrep(5);
+        this.lockLandscape();
+      };
+      this.auth.authStateOnce().then(u => {
+        if (!u) {
+          this.router.navigate(['/login']);
+          return;
+        }
+        const existing = this.svc.getById(id);
+        if (existing) {
+          applyTraining(existing);
+        } else {
+          this.svc.getByIdOnce(id).then(applyTraining);
+        }
+      });
     });
     this.route.queryParamMap.subscribe(q => {
       const a = q.get('autoplay');
       this.autoplay.set(a === null ? true : (a === '1' || a === 'true'));
     });
+  }
+
+  ngOnDestroy() {
+    if (this.timerId) clearInterval(this.timerId);
+    if (this.prepTimerId) clearInterval(this.prepTimerId);
+    this.metro.stop();
+    this.isPrep.set(false);
+    this.nextHint.set(false);
   }
 
   current(): Exercise | undefined {
@@ -393,9 +422,6 @@ export class TrainingRunnerComponent implements OnInit {
         clearInterval(this.timerId);
         this.metro.stop();
         if (this.isVideoCurrent()) {
-          if (!(this.autoplay() && total === 0)) {
-            this.nextHint.set(true);
-          }
           return;
         }
         if (this.autoplay() && this.training && this.index() + 1 < this.training.exercises.length) {
@@ -535,23 +561,33 @@ export class TrainingRunnerComponent implements OnInit {
     const totalDur = ((ex?.durationMinutes ?? 0) * 60) + (ex?.durationSeconds ?? 0);
     const shouldHintOnOverlay = this.autoplay() && totalDur === 0;
     if (/youtube\-nocookie\.com|youtube\.com/i.test(origin)) {
+      if (data.event === 'onReady') {
+        if (this.shouldAutoplay()) {
+          const id = this.videoIframeId();
+          const el = document.getElementById(id) as HTMLIFrameElement | null;
+          if (el) {
+            const ytOrigin = el.src.includes('youtube-nocookie.com') ? 'https://www.youtube-nocookie.com' : 'https://www.youtube.com';
+            el.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'playVideo' }), ytOrigin);
+          }
+        }
+      }
       if (data.event === 'onStateChange' && data.info === 0) {
         this.replayOverlay.set(true);
-        if (shouldHintOnOverlay) this.nextHint.set(true);
+        this.nextHint.set(true);
       }
       if (data.event === 'infoDelivery' && data.info && typeof data.info.playerState === 'number' && data.info.playerState === 0) {
         this.replayOverlay.set(true);
-        if (shouldHintOnOverlay) this.nextHint.set(true);
+        this.nextHint.set(true);
       }
     } else if (/vimeo\.com/i.test(origin)) {
       if (data.event === 'ended' || data.event === 'finish') {
         this.replayOverlay.set(true);
-        if (shouldHintOnOverlay) this.nextHint.set(true);
+        this.nextHint.set(true);
       }
     } else if (/dailymotion\.com|dai\.ly/i.test(origin)) {
       if (data.event === 'ended' || data.type === 'ended') {
         this.replayOverlay.set(true);
-        if (shouldHintOnOverlay) this.nextHint.set(true);
+        this.nextHint.set(true);
       }
     }
   }
@@ -671,12 +707,52 @@ export class TrainingRunnerComponent implements OnInit {
   }
   @HostListener('document:keydown', ['$event'])
   onKeyDown(ev: KeyboardEvent) {
+    this.metro.unlock();
     if (ev.key === 'Enter') {
       ev.preventDefault();
       this.nextOrFinish();
     } else if (ev.key === 'Backspace') {
       ev.preventDefault();
       this.prev();
+    }
+  }
+
+  @HostListener('window:popstate')
+  onPopState() {
+    if (this.timerId) clearInterval(this.timerId);
+    if (this.prepTimerId) clearInterval(this.prepTimerId);
+    this.metro.stop();
+    this.isPrep.set(false);
+    this.nextHint.set(false);
+  }
+
+  @HostListener('document:click')
+  onGlobalClick() {
+    this.metro.unlock();
+    this.unmuteCurrentVideo();
+  }
+
+  @HostListener('document:touchstart')
+  onGlobalTouch() {
+    this.metro.unlock();
+    this.unmuteCurrentVideo();
+  }
+
+  private unmuteCurrentVideo() {
+    if (!this.isVideoCurrent()) return;
+    const id = this.videoIframeId();
+    const el = document.getElementById(id) as HTMLIFrameElement | null;
+    if (!el) return;
+    const link = this.current()?.resourceLink ?? '';
+    if (this.isYouTubeLink(link)) {
+      const ytOrigin = el.src.includes('youtube-nocookie.com') ? 'https://www.youtube-nocookie.com' : 'https://www.youtube.com';
+      el.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'unMute' }), ytOrigin);
+    } else if (this.isVimeoLink(link)) {
+      el.contentWindow?.postMessage(JSON.stringify({ method: 'setVolume', value: 1 }), '*');
+    } else if (this.isDailymotionLink(link)) {
+      try {
+        el.contentWindow?.postMessage(JSON.stringify({ event: 'volume', value: 1 }), '*');
+      } catch {}
     }
   }
 }

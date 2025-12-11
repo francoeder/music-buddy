@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, ViewChildren, ElementRef, QueryList } from '@angular/core';
+import { Component, inject, ViewChild, ViewChildren, ElementRef, QueryList, HostListener, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormArray, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -148,6 +148,9 @@ export class TrainingEditorComponent {
   @ViewChild('content') content?: ElementRef<HTMLElement>;
 
   editingCover = false;
+  unsaved = signal(false);
+  private bootstrapping = true;
+  private trackingSetup = false;
 
   form = this.fb.group({
     _id: ['', Validators.required],
@@ -163,19 +166,49 @@ export class TrainingEditorComponent {
       const id = params.get('id') as string;
       const existing = this.svc.getById(id);
       const email = this.auth.user()?.email ?? '';
-      const training: Training = existing ?? { _id: id, title: 'New Training', owner: email, active: true, cover: '', exercises: [] };
-      this.form.patchValue({
-        _id: training._id,
-        title: training.title,
-        owner: training.owner,
-        active: training.active,
-        cover: training.cover ?? ''
-      }, { emitEvent: false });
-      const arr = this.fb.array(training.exercises.map(e => this.exerciseGroup(e)));
-      this.form.setControl('exercises', arr);
-      arr.controls.forEach(g => this.tryAutoFillDuration(g as FormGroup));
-      this.form.get('owner')?.disable({ emitEvent: false });
+      const applyTraining = (training: Training) => {
+        this.form.patchValue({
+          _id: training._id,
+          title: training.title,
+          owner: training.owner,
+          active: training.active,
+          cover: training.cover ?? ''
+        }, { emitEvent: false });
+        const arr = this.fb.array(training.exercises.map(e => this.exerciseGroup(e)));
+        this.form.setControl('exercises', arr);
+        arr.controls.forEach(g => this.tryAutoFillDuration(g as FormGroup));
+        this.form.get('owner')?.disable({ emitEvent: false });
+        if (!this.trackingSetup) {
+          this.form.valueChanges.subscribe(() => {
+            if (!this.bootstrapping) this.unsaved.set(true);
+          });
+          (this.form.get('exercises') as FormArray).valueChanges.subscribe(() => {
+            if (!this.bootstrapping) this.unsaved.set(true);
+          });
+          this.trackingSetup = true;
+        }
+        this.bootstrapping = false;
+      };
+      if (existing) {
+        applyTraining(existing);
+      } else {
+        this.svc.getByIdOnce(id).then(t => {
+          if (t) {
+            applyTraining(t);
+          } else {
+            applyTraining({ _id: id, title: 'New Training', owner: email, active: true, cover: '', exercises: [] });
+          }
+        });
+      }
     });
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(ev: BeforeUnloadEvent) {
+    if (this.form.dirty || this.unsaved()) {
+      ev.preventDefault();
+      ev.returnValue = '';
+    }
   }
 
   get exercises() {
@@ -196,6 +229,8 @@ export class TrainingEditorComponent {
     if (this.form.valid) {
       const value = this.form.getRawValue() as Training;
       this.svc.save(value);
+      this.unsaved.set(false);
+      this.form.markAsPristine();
       this.back();
     }
   }
@@ -209,6 +244,8 @@ export class TrainingEditorComponent {
         const g = this.exerciseGroup(result as Exercise);
         this.exercises.push(g);
         this.tryAutoFillDuration(g);
+        this.unsaved.set(true);
+        this.form.markAsDirty();
       }
     });
   }
@@ -237,6 +274,8 @@ export class TrainingEditorComponent {
           breakSeconds: updated.breakSeconds
         });
         this.tryAutoFillDuration(group);
+        this.unsaved.set(true);
+        this.form.markAsDirty();
       }
     });
   }
@@ -278,6 +317,8 @@ export class TrainingEditorComponent {
 
   removeExercise(i: number) {
     this.exercises.removeAt(i);
+    this.unsaved.set(true);
+    this.form.markAsDirty();
   }
 
   drop(event: CdkDragDrop<FormGroup[]>) {
@@ -288,6 +329,8 @@ export class TrainingEditorComponent {
     this.exercises.removeAt(prev);
     if (prev < curr) curr--; // adjust target after removal
     this.exercises.insert(curr, ctrl);
+    this.unsaved.set(true);
+    this.form.markAsDirty();
   }
 
 
@@ -300,6 +343,8 @@ export class TrainingEditorComponent {
       const base64 = reader.result as string;
       this.form.get('cover')?.setValue(base64);
       this.editingCover = false;
+      this.unsaved.set(true);
+      this.form.markAsDirty();
     };
     reader.readAsDataURL(file);
   }
