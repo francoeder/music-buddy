@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MetronomeService } from '../../services/metronome.service';
 import { PrepOverlayComponent } from './prep-overlay.component';
+import { UsageService } from '../../services/usage.service';
 
 type MediaType = 'image' | 'iframe' | 'none';
 
@@ -81,9 +82,10 @@ type MediaType = 'image' | 'iframe' | 'none';
 export class TrainingRunnerComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private svc = inject(TrainingService);
   private auth = inject(AuthService);
+  private svc = inject(TrainingService);
   metro = inject(MetronomeService);
+  private usage = inject(UsageService);
 
   training?: Training;
   index = signal(0);
@@ -109,6 +111,7 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
           this.router.navigate(['/']);
           return;
         }
+        this.usage.recordRun(id);
         this.training = t;
         this.index.set(0);
         this.startPrep(5);

@@ -1,0 +1,74 @@
+import { Component, computed, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { Router } from '@angular/router';
+import { TrainingService } from '../../services/training.service';
+import { UsageService } from '../../services/usage.service';
+import { Training } from '../../models/training.model';
+
+@Component({
+  selector: 'app-top-recent-trainings',
+  standalone: true,
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule],
+  template: `
+    <div class="p-6">
+      <h2 class="text-xl font-semibold mb-4">Your last trainings</h2>
+      @if (trainings().length > 0) {
+        <div class="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          @for (t of trainings(); track t._id) {
+            <mat-card class="shadow hover:shadow-lg transition-shadow">
+              @if (t.cover) {
+                <img mat-card-image [src]="t.cover" alt="Training cover" class="h-40 object-cover" />
+              } @else {
+                <div class="h-40 bg-gradient-to-br from-indigo-200 to-indigo-400 flex items-center justify-center text-white text-xl font-semibold">{{ t.title }}</div>
+              }
+              <div class="px-4 pt-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <div class="text-base font-semibold leading-tight">{{ t.title }}</div>
+                    <div class="text-sm text-gray-500">Exercises: {{ t.exercises.length }}</div>
+                  </div>
+                  <div class="text-xs px-2 py-1 rounded-full" [class.bg-green-100]="t.active" [class.text-green-700]="t.active" [class.bg-red-100]="!t.active" [class.text-red-700]="!t.active">{{ t.active ? 'Active' : 'Inactive' }}</div>
+                </div>
+              </div>
+              <mat-card-actions class="px-4 py-3 mt-1 flex items-center justify-end gap-2">
+                <button mat-stroked-button (click)="edit(t)">
+                  <mat-icon>edit</mat-icon>
+                  Edit
+                </button>
+                <button mat-raised-button color="primary" (click)="play(t)">
+                  <mat-icon>play_arrow</mat-icon>
+                  Play
+                </button>
+              </mat-card-actions>
+            </mat-card>
+          }
+        </div>
+      } @else {
+        <div class="text-gray-600">No recent runs.</div>
+      }
+    </div>
+  `
+})
+export class TopRecentTrainingsComponent {
+  private router = inject(Router);
+  private trainingsSvc = inject(TrainingService);
+  private usageSvc = inject(UsageService);
+
+  ids = this.usageSvc.getRecentIds();
+  trainings = computed(() => {
+    const all = this.trainingsSvc.getAll()();
+    const ids = this.ids();
+    return ids.map(id => all.find(t => t._id === id)).filter(Boolean) as Training[];
+  });
+
+  play(t: Training) {
+    this.router.navigate(['/run', t._id], { queryParams: { autoplay: '1' } });
+  }
+
+  edit(t: Training) {
+    this.router.navigate(['/training', t._id]);
+  }
+}
