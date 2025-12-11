@@ -20,9 +20,11 @@ import { TranslateModule } from '@ngx-translate/core';
       />
       <mat-card class="w-full max-w-md p-6">
         <h2 class="text-xl font-semibold mb-4">{{ 'login.title' | translate }}</h2>
-        <button mat-raised-button color="primary" class="w-full flex items-center gap-2" (click)="onLogin()">
-          <mat-icon>login</mat-icon>
-          {{ 'login.google' | translate }}
+        <button mat-raised-button color="primary" class="w-full" (click)="onLogin()">
+          <span class="w-full flex items-center justify-center gap-2">
+            <img src="assets/icons/google.svg" alt="Google" class="w-5 h-5" />
+            <span>{{ 'login.google' | translate }}</span>
+          </span>
         </button>
       </mat-card>
     </div>
