@@ -1,19 +1,21 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from './components/language-switcher.component';
 import { AuthService } from './core/services/auth.service';
 import { Router } from '@angular/router';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, MatToolbarModule, MatButtonModule, MatIconModule, MatMenuModule, TranslateModule, LanguageSwitcherComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, MatToolbarModule, MatButtonModule, MatIconModule, MatMenuModule, MatSnackBarModule, TranslateModule, LanguageSwitcherComponent],
   template: `
     <div class="min-h-screen flex flex-col">
       <mat-toolbar *ngIf="!isRunnerRoute()" color="primary" class="sticky top-0 z-10">
@@ -123,10 +125,12 @@ import { Router } from '@angular/router';
     `
   ]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   private router = inject(Router);
   private auth = inject(AuthService);
   private translate = inject(TranslateService);
+  private swUpdate = inject(SwUpdate);
+  private snack = inject(MatSnackBar);
   displayName = () => this.auth.user()?.displayName ?? null;
   email = () => this.auth.user()?.email ?? null;
   photoUrl = () => this.auth.user()?.photoURL ?? null;
@@ -137,11 +141,36 @@ export class AppComponent {
     if (em) return em.split('@')[0];
     return null;
   };
-  constructor() {
+  constructor() {}
+  ngOnInit(): void {
     this.translate.addLangs(['en-US', 'pt-BR']);
     this.translate.setDefaultLang('en-US');
-    const saved = localStorage.getItem('lang') || 'en-US';
-    this.translate.use(saved);
+    const saved = localStorage.getItem('lang');
+    const lang = saved === 'pt-BR' || saved === 'en-US' ? saved : 'en-US';
+    Promise.resolve().then(() => {
+      this.translate.use(lang!);
+    });
+    window.addEventListener('appinstalled', () => {
+      const msg = this.translate.instant('pwa.installedMsg');
+      const ok = this.translate.instant('pwa.ok');
+      this.snack.open(msg, ok, { duration: 6000 });
+    });
+    window.addEventListener('beforeinstallprompt', (e: any) => {
+      e.preventDefault();
+      (window as any).__deferredInstallPrompt = e;
+      window.dispatchEvent(new Event('deferredpromptchanged'));
+    });
+    window.addEventListener('appinstalled', () => {
+      (window as any).__deferredInstallPrompt = null;
+      window.dispatchEvent(new Event('deferredpromptchanged'));
+    });
+    if (this.swUpdate.isEnabled) {
+      this.swUpdate.versionUpdates.subscribe(e => {
+        if ((e as VersionReadyEvent).type === 'VERSION_READY') {
+          location.reload();
+        }
+      });
+    }
   }
   async onLogout() {
     await this.auth.logout();

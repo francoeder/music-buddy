@@ -25,7 +25,11 @@
     "inactive": "Inativo",
     "edit": "Editar",
     "play": "Iniciar",
-    "noRecentRuns": "Sem execuções recentes."
+    "noRecentRuns": "Sem execuções recentes.",
+    "installTitle": "Instalar o aplicativo",
+    "installDescription": "Tenha o Music Buddy no seu dispositivo para uma experiência melhor.",
+    "install": "Instalar",
+    "dismiss": "Agora não"
   },
   "login": {
     "title": "Entrar",
@@ -46,5 +50,9 @@
       "nextExercise": "Próximo exercício:",
       "bpm": "BPM:"
     }
+  },
+  "pwa": {
+    "installedMsg": "App instalado. Abra pelo ícone da Tela Inicial.",
+    "ok": "OK"
   }
 }

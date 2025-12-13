@@ -25,7 +25,11 @@
     "inactive": "Inactive",
     "edit": "Edit",
     "play": "Play",
-    "noRecentRuns": "No recent runs."
+    "noRecentRuns": "No recent runs.",
+    "installTitle": "Install the app",
+    "installDescription": "Get Music Buddy on your device for a better experience.",
+    "install": "Install",
+    "dismiss": "Not now"
   },
   "login": {
     "title": "Sign In",
@@ -46,5 +50,9 @@
       "nextExercise": "Next exercise:",
       "bpm": "BPM:"
     }
+  },
+  "pwa": {
+    "installedMsg": "App installed. Open it from your Home screen.",
+    "ok": "OK"
   }
 }

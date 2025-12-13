@@ -29,6 +29,8 @@
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "css",
+            "serviceWorker": true,
+            "ngswConfigPath": "ngsw-config.json",
             "assets": [
               {
                 "glob": "**/*",
@@ -37,6 +39,8 @@
               },
               "src/favicon.ico"
             ],
+            "serviceWorker": true,
+            "ngswConfigPath": "ngsw-config.json",
             "styles": [
               "src/styles.css",
               "src/assets/themes/theme.scss"
@@ -52,7 +56,9 @@
                   "maximumError": "2mb"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "serviceWorker": true,
+              "ngswConfigPath": "ngsw-config.json"
             }
           }
         },
