@@ -5,6 +5,8 @@ export class MetronomeService {
   isPlaying = signal(false);
   currentBpm = signal(0);
   beatStyle = signal<'none' | '4/4' | '3/4' | '2/4'>('none');
+  beatTick = signal(0);
+  beatInMeasure = signal(1);
 
   private audioCtx?: AudioContext;
   private nextTickTime = 0;
@@ -41,6 +43,8 @@ export class MetronomeService {
     this.isPlaying.set(false);
     this.currentBpm.set(0);
     this.beatIndex = 0;
+    this.beatTick.set(0);
+    this.beatInMeasure.set(1);
     if (this.schedulerId) {
       clearTimeout(this.schedulerId);
       this.schedulerId = undefined;
@@ -108,7 +112,13 @@ export class MetronomeService {
     while (this.nextTickTime < this.audioCtx.currentTime + 0.1) {
       const style = this.beatStyle();
       const accent = style !== 'none' && this.beatIndex === 0;
+      const currentBeatNumber = (this.beatIndex % this.measureBeats) + 1;
       this.scheduleClick(this.nextTickTime, accent);
+      const delayMs = Math.max(0, Math.floor((this.nextTickTime - this.audioCtx.currentTime) * 1000));
+      setTimeout(() => {
+        this.beatInMeasure.set(currentBeatNumber);
+        this.beatTick.set(this.beatTick() + 1);
+      }, delayMs);
       this.nextTickTime += secondsPerBeat;
       const beats = this.measureBeats;
       if (beats <= 1) {

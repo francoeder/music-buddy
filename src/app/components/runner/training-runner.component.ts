@@ -20,7 +20,7 @@ type MediaType = 'image' | 'iframe' | 'none';
   imports: [CommonModule, SafeResourcePipe, MatButtonModule, MatIconModule, PrepOverlayComponent, TranslateModule],
   template: `
     <div class="h-[100svh] overflow-hidden flex flex-col">
-      <app-prep-overlay *ngIf="isPrep() && !isNextVideo()" [seconds]="prepRemaining()" [nextTitle]="prepNextTitle()" [bpm]="prepBpm()" [message]="prepMessage()"></app-prep-overlay>
+      <app-prep-overlay *ngIf="isPrep() && !isNextVideo()" [seconds]="prepRemaining()" [nextTitle]="prepNextTitle()" [bpm]="prepBpm()" [message]="prepMessage()" [beatStyle]="prepBeatStyle()" [prepMeasures]="prepMeasures()" [beatTick]="metro.beatTick()" [beatInMeasure]="metro.beatInMeasure()" [breakSeconds]="prepBreakSeconds()" [autoplay]="autoplay()"></app-prep-overlay>
       <div class="h-14 pr-3 pl-0 border-b bg-white shrink-0 relative flex items-center justify-center">
         <div class="absolute left-3">
           <button mat-raised-button color="primary" (click)="exit()">
@@ -648,8 +648,10 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
     const secondsPerBeatPrep = bpm > 0 ? (60 / bpm) : 0;
     const measureSecondsPrep = beatsPrep * secondsPerBeatPrep;
     const measuresToPlayPrep = (ex?.prepMeasures ?? 2);
+    const measuresTimeSecPrep = Math.max(1, Math.ceil(measuresToPlayPrep * measureSecondsPrep));
+    const showReadySec = Math.max(1, Math.min(3, seconds - measuresTimeSecPrep));
     const metroStartThresholdPrep = (bpm > 0 && measuresToPlayPrep > 0)
-      ? Math.min(seconds, Math.max(1, Math.ceil(measuresToPlayPrep * measureSecondsPrep)))
+      ? measuresTimeSecPrep
       : -1;
     this.prepTimerId = setInterval(() => {
       const r = this.prepRemaining();
@@ -761,8 +763,10 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
       const secondsPerBeatPrep = nbpmPrep > 0 ? (60 / nbpmPrep) : 0;
       const measureSecondsPrep = beatsPrep * secondsPerBeatPrep;
       const measuresToPlayPrep = (upcomingForPrep?.prepMeasures ?? 2);
+      const measuresTimeSecPrep2 = Math.max(1, Math.ceil(measuresToPlayPrep * measureSecondsPrep));
+      const showReadySecPrep = Math.max(1, Math.min(3, breakSec - measuresTimeSecPrep2));
       const metroStartThresholdPrep = (nbpmPrep > 0 && measuresToPlayPrep > 0)
-        ? Math.min(breakSec, Math.max(1, Math.ceil(measuresToPlayPrep * measureSecondsPrep)))
+        ? measuresTimeSecPrep2
         : -1;
       this.prepTimerId = setInterval(() => {
         const r2 = this.prepRemaining();
@@ -774,6 +778,7 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
           if (nbpm > 0 && measuresToPlay > 0) {
             const nstyle: NonNullable<Exercise['beatStyle']> = nextEx2?.beatStyle ?? 'none';
             this.metro.startWithAlignment(nbpm, nstyle, measuresToPlay, r2);
+            metroStartedForPrep = true;
           } else if (nbpm > 0) {
             const nstyle: NonNullable<Exercise['beatStyle']> = nextEx2?.beatStyle ?? 'none';
             this.metro.setBeatStyle(nstyle);
@@ -794,7 +799,6 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
             this.index.set(targetIdx2);
             this.shouldAutoplay.set(false);
           }
-          metroStartedForPrep = true;
         }
         if (r2 > 0) {
           this.prepRemaining.set(r2 - 1);
@@ -833,11 +837,23 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
     return this.training.exercises[idx]?.bpm ?? 0;
   }
 
+  prepBeatStyle() {
+    const def: NonNullable<Exercise['beatStyle']> = 'none';
+    if (!this.training) return def;
+    const idx = this.prepTargetIndex();
+    if (idx === null) return (this.current()?.beatStyle ?? def) as NonNullable<Exercise['beatStyle']>;
+    return (this.training.exercises[idx]?.beatStyle ?? (this.current()?.beatStyle ?? def)) as NonNullable<Exercise['beatStyle']>;
+  }
+
+  prepMeasures() {
+    if (!this.training) return 0;
+    const idx = this.prepTargetIndex();
+    if (idx === null) return this.current()?.prepMeasures ?? 0;
+    return this.training.exercises[idx]?.prepMeasures ?? (this.current()?.prepMeasures ?? 0);
+  }
+
   prepMessage() {
-    const b = this.prepBreakSeconds();
-    const r = this.prepRemaining();
-    if (b <= 5) return 'runner.prep.getReady';
-    return r > 5 ? 'runner.prep.restTime' : 'runner.prep.getReady';
+    return this.prepPhase() === 'rest' ? 'runner.prep.restTime' : 'runner.prep.getReady';
   }
 
   remainingMinutes() {
