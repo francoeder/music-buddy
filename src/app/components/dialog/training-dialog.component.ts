@@ -7,104 +7,125 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { TranslateModule } from '@ngx-translate/core';
 import { Training, Exercise } from '../../models/training.model';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-training-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, ReactiveFormsModule, MatButtonModule, MatInputModule, MatFormFieldModule, MatCheckboxModule, MatIconModule],
+  imports: [CommonModule, MatDialogModule, ReactiveFormsModule, MatButtonModule, MatInputModule, MatFormFieldModule, MatCheckboxModule, MatIconModule, MatSelectModule, TranslateModule],
   template: `
     <div class="relative min-h-[300px]">
       <mat-dialog-content #content class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-        <h2 class="text-xl font-semibold">Training</h2>
+        <h2 class="text-xl font-semibold">{{ 'dialogs.training.title' | translate }}</h2>
         <form [formGroup]="form" class="space-y-3">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
             <mat-form-field appearance="fill" class="w-full">
-              <mat-label>Title</mat-label>
+              <mat-label>{{ 'common.title' | translate }}</mat-label>
               <input matInput formControlName="title" />
             </mat-form-field>
             <mat-form-field appearance="fill" class="w-full">
-              <mat-label>Owner</mat-label>
+              <mat-label>{{ 'common.owner' | translate }}</mat-label>
               <input matInput formControlName="owner" />
             </mat-form-field>
             <ng-container *ngIf="showCoverPreview(); else coverInput">
               <div class="md:col-span-2 flex items-center gap-3">
-                <img [src]="form.get('cover')?.value" alt="Cover" class="h-24 w-auto object-cover rounded border" />
+                <img [src]="form.get('cover')?.value" [alt]="'common.cover' | translate" class="h-24 w-auto object-cover rounded border" />
                 <button mat-stroked-button (click)="editCover()">
                   <mat-icon>edit</mat-icon>
-                  Edit
+                  {{ 'common.edit' | translate }}
                 </button>
               </div>
             </ng-container>
             <ng-template #coverInput>
               <mat-form-field appearance="fill" class="w-full md:col-span-2">
-                <mat-label>Cover URL</mat-label>
+                <mat-label>{{ 'common.coverUrl' | translate }}</mat-label>
                 <input matInput formControlName="cover" />
               </mat-form-field>
             </ng-template>
             <div class="md:col-span-2 flex items-center gap-3" *ngIf="editingCover || !isImage(form.get('cover')?.value || '')">
-              <button mat-stroked-button (click)="coverInput.click()">Upload Cover</button>
+              <button mat-stroked-button (click)="coverInput.click()">{{ 'common.uploadImage' | translate }}</button>
               <input #coverInput hidden type="file" accept="image/*" (change)="onCoverSelected($event)" />
             </div>
-            <mat-checkbox formControlName="active" class="md:col-span-2">Active</mat-checkbox>
+            <mat-checkbox formControlName="active" class="md:col-span-2">{{ 'common.active' | translate }}</mat-checkbox>
           </div>
 
           <div class="mt-4">
             <div class="flex items-center justify-between">
-              <h3 class="font-semibold">Exercises</h3>
+              <h3 class="font-semibold">{{ 'common.exercises' | translate }}</h3>
             </div>
 
             <div class="space-y-3 mt-3" formArrayName="exercises">
               <div class="p-3 border rounded" *ngFor="let ex of exercises.controls; let i = index" [formGroupName]="i">
                 <div class="grid grid-cols-12 gap-3 items-start">
                   <mat-form-field appearance="fill" class="w-full col-span-12 md:col-span-4">
-                    <mat-label>Title</mat-label>
+                    <mat-label>{{ 'common.title' | translate }}</mat-label>
                     <input matInput formControlName="title" />
                   </mat-form-field>
 
                   <mat-form-field appearance="fill" class="w-full col-span-6 md:col-span-2">
-                    <mat-label>BPM</mat-label>
+                    <mat-label>{{ 'common.bpm' | translate }}</mat-label>
                     <input matInput type="number" formControlName="bpm" />
                   </mat-form-field>
 
                   <mat-form-field appearance="fill" class="w-full col-span-3 md:col-span-2">
-                    <mat-label>Minutes</mat-label>
+                    <mat-label>{{ 'common.minutes' | translate }}</mat-label>
                     <input matInput type="number" formControlName="durationMinutes" />
                   </mat-form-field>
 
                   <mat-form-field appearance="fill" class="w-full col-span-3 md:col-span-2">
-                    <mat-label>Seconds</mat-label>
+                    <mat-label>{{ 'common.seconds' | translate }}</mat-label>
                     <input matInput type="number" formControlName="durationSeconds" />
                   </mat-form-field>
 
                   <mat-form-field appearance="fill" class="w-full col-span-6 md:col-span-2">
-                    <mat-label>Break Seconds</mat-label>
+                    <mat-label>{{ 'common.breakSeconds' | translate }}</mat-label>
                     <input matInput type="number" min="5" formControlName="breakSeconds" />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="fill" class="w-full col-span-12 md:col-span-4">
+                    <mat-label>{{ 'dialogs.exercise.prepMeasures' | translate }}</mat-label>
+                    <mat-select formControlName="prepMeasures">
+                      <mat-option [value]="2">{{ 'prepMeasures.two' | translate }}</mat-option>
+                      <mat-option [value]="1">{{ 'prepMeasures.one' | translate }}</mat-option>
+                      <mat-option [value]="0">{{ 'prepMeasures.none' | translate }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="fill" class="w-full col-span-12 md:col-span-4">
+                    <mat-label>{{ 'common.beatAccent' | translate }}</mat-label>
+                    <mat-select formControlName="beatStyle">
+                      <mat-option value="none">{{ 'beat.none' | translate }}</mat-option>
+                      <mat-option value="4/4">{{ 'beat.4_4' | translate }}</mat-option>
+                      <mat-option value="3/4">{{ 'beat.3_4' | translate }}</mat-option>
+                      <mat-option value="2/4">{{ 'beat.2_4' | translate }}</mat-option>
+                    </mat-select>
                   </mat-form-field>
 
                   <ng-container *ngIf="showResourcePreview(i); else resourceInput">
                     <div class="col-span-12 flex items-center gap-3">
-                      <img [src]="ex.get('resourceLink')?.value" alt="Resource" class="h-24 w-auto object-cover rounded border" />
+                      <img [src]="ex.get('resourceLink')?.value" [alt]="'common.resource' | translate" class="h-24 w-auto object-cover rounded border" />
                       <button mat-stroked-button (click)="editResource(i)">
                         <mat-icon>edit</mat-icon>
-                        Edit
+                        {{ 'common.edit' | translate }}
                       </button>
                     </div>
                   </ng-container>
                   <ng-template #resourceInput>
                     <mat-form-field appearance="fill" class="w-full col-span-12">
-                      <mat-label>Resource URL</mat-label>
+                      <mat-label>{{ 'common.resourceUrl' | translate }}</mat-label>
                       <input matInput formControlName="resourceLink" />
                     </mat-form-field>
                   </ng-template>
                 </div>
                 <div class="flex items-center justify-between mt-2">
                   <div *ngIf="editingResource(i) || !isImage(ex.get('resourceLink')?.value || '')">
-                    <button mat-stroked-button (click)="fileInput.click()">Upload Image</button>
+                    <button mat-stroked-button (click)="fileInput.click()">{{ 'common.uploadImage' | translate }}</button>
                     <input #fileInput hidden type="file" accept="image/*" (change)="onFileSelected($event, i)" />
                   </div>
-                  <button mat-button color="warn" (click)="removeExercise(i)">Remove</button>
+                  <button mat-button color="warn" (click)="removeExercise(i)">{{ 'common.remove' | translate }}</button>
                 </div>
               </div>
             </div>
@@ -113,12 +134,12 @@ import { AuthService } from '../../core/services/auth.service';
       </mat-dialog-content>
       <mat-dialog-actions class="px-4 py-3 border-t w-full pr-0 flex items-center justify-between">
         <div class="space-x-2">
-          <button mat-raised-button (click)="cancel()">Cancel</button>
-          <button mat-raised-button color="primary" (click)="save()">Save</button>
+          <button mat-raised-button (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+          <button mat-raised-button color="primary" (click)="save()">{{ 'common.save' | translate }}</button>
         </div>
         <button mat-raised-button color="secondary" class="ml-auto" (click)="addExercise()">
           <mat-icon>add</mat-icon>
-          Add Exercise
+          {{ 'common.addExercise' | translate }}
         </button>
       </mat-dialog-actions>
     </div>
@@ -154,7 +175,7 @@ export class TrainingDialogComponent {
 
   addExercise() {
     const id = this.exercises.length + 1;
-    const ex: Exercise = { id, title: 'Exercise', bpm: 0, durationMinutes: 1, durationSeconds: 0, breakSeconds: 10 };
+    const ex: Exercise = { id, title: 'Exercise', bpm: 0, durationMinutes: 1, durationSeconds: 0, breakSeconds: 10, beatStyle: 'none', prepMeasures: 2 };
     this.exercises.push(this.exerciseGroup(ex));
     setTimeout(() => {
       const el = this.content?.nativeElement;
@@ -243,7 +264,9 @@ export class TrainingDialogComponent {
       bpm: [e.bpm, [Validators.min(0)]],
       durationMinutes: [e.durationMinutes, [Validators.min(0)]],
       durationSeconds: [e.durationSeconds, [Validators.min(0)]],
-      breakSeconds: [e.breakSeconds, [Validators.min(5)]]
+      breakSeconds: [e.breakSeconds, [Validators.min(5)]],
+      beatStyle: [e.beatStyle ?? 'none'],
+      prepMeasures: [e.prepMeasures ?? 2]
     });
   }
 }

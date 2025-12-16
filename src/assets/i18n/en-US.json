@@ -40,9 +40,64 @@
     "title": "Dashboard",
     "logout": "Logout"
   },
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "metronome": "Metronome",
+    "title": "Title",
+    "owner": "Owner",
+    "cover": "Cover",
+    "coverUrl": "Cover URL",
+    "edit": "Edit",
+    "uploadImage": "Upload Image",
+    "active": "Active",
+    "exercises": "Exercises",
+    "addExercise": "Add Exercise",
+    "exercise": "Exercise",
+    "bpm": "BPM",
+    "minutes": "Minutes",
+    "seconds": "Seconds",
+    "breakSeconds": "Break (seconds)",
+    "duration": "Duration",
+    "break": "Break",
+    "beatAccent": "Beat accent",
+    "resource": "Resource",
+    "resourceUrl": "Resource URL",
+    "remove": "Remove",
+    "measures": "measure(s)"
+  },
+  "dialogs": {
+    "training": {
+      "title": "Training"
+    },
+    "exercise": {
+      "title": "Exercise",
+      "prepMeasures": "Preparation measures"
+    }
+  },
+  "prepMeasures": {
+    "two": "Two",
+    "one": "One",
+    "none": "None"
+  },
+  "beat": {
+    "none": "None",
+    "4_4": "4/4",
+    "3_4": "3/4",
+    "2_4": "2/4"
+  },
   "runner": {
     "exitTraining": "Exit training",
     "playAgain": "Play again",
+    "noMedia": "No media",
+    "previous": "Previous",
+    "play": "Play",
+    "pause": "Pause",
+    "next": "Next",
+    "finish": "Finish",
+    "playOrPause": "Play or Pause",
+    "nextOrFinish": "Next or Finish",
     "prep": {
       "getReady": "Get ready",
       "restTime": "Rest time",

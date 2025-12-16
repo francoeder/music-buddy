@@ -15,6 +15,7 @@ import { Training, Exercise } from '../../models/training.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ExerciseDialogComponent } from '../../components/dialog/exercise-dialog.component';
 import { SafeResourcePipe } from '../../pipes/safe-resource.pipe';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-training-editor',
@@ -30,60 +31,61 @@ import { SafeResourcePipe } from '../../pipes/safe-resource.pipe';
     MatCardModule,
     MatDialogModule,
     DragDropModule,
-    SafeResourcePipe
+    SafeResourcePipe,
+    TranslateModule
   ],
   template: `
     <div class="p-6 max-w-5xl mx-auto">
       <div class="flex items-center justify-between mb-4">
         <button mat-stroked-button (click)="back()">
           <mat-icon>arrow_back</mat-icon>
-          Back
+          {{ 'common.back' | translate }}
         </button>
         <div class="space-x-2">
-          <button mat-raised-button (click)="cancel()">Cancel</button>
-          <button mat-raised-button color="primary" (click)="save()">Save</button>
+          <button mat-raised-button (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+          <button mat-raised-button color="primary" (click)="save()">{{ 'common.save' | translate }}</button>
         </div>
       </div>
 
       <form [formGroup]="form" class="space-y-4">
-        <h2 class="text-xl font-semibold">Training</h2>
+        <h2 class="text-xl font-semibold">{{ 'dialogs.training.title' | translate }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
           <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Title</mat-label>
+            <mat-label>{{ 'common.title' | translate }}</mat-label>
             <input matInput formControlName="title" />
           </mat-form-field>
           <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Owner</mat-label>
+            <mat-label>{{ 'common.owner' | translate }}</mat-label>
             <input matInput formControlName="owner" />
           </mat-form-field>
 
           <ng-container *ngIf="showCoverPreview(); else coverInput">
             <div class="md:col-span-2 flex items-center gap-3">
-              <img [src]="form.get('cover')?.value" alt="Cover" class="h-24 w-auto object-cover rounded border" />
+              <img [src]="form.get('cover')?.value" [alt]="'common.cover' | translate" class="h-24 w-auto object-cover rounded border" />
               <button mat-stroked-button (click)="editCover()">
                 <mat-icon>edit</mat-icon>
-                Edit
+                {{ 'common.edit' | translate }}
               </button>
             </div>
           </ng-container>
           <ng-template #coverInput>
             <mat-form-field appearance="fill" class="w-full md:col-span-2">
-              <mat-label>Cover URL</mat-label>
+              <mat-label>{{ 'common.coverUrl' | translate }}</mat-label>
               <input matInput formControlName="cover" />
             </mat-form-field>
           </ng-template>
           <div class="md:col-span-2 flex items-center gap-3" *ngIf="editingCover || !isImage(form.get('cover')?.value || '')">
-            <button mat-stroked-button (click)="coverFileInput.click()">Upload Image</button>
+            <button mat-stroked-button (click)="coverFileInput.click()">{{ 'common.uploadImage' | translate }}</button>
             <input #coverFileInput hidden type="file" accept="image/*" (change)="onCoverSelected($event)" />
           </div>
-          <mat-checkbox formControlName="active" class="md:col-span-2">Active</mat-checkbox>
+          <mat-checkbox formControlName="active" class="md:col-span-2">{{ 'common.active' | translate }}</mat-checkbox>
         </div>
 
         <div class="flex items-center justify-between mt-4">
-          <h3 class="font-semibold">Exercises</h3>
+          <h3 class="font-semibold">{{ 'common.exercises' | translate }}</h3>
           <button mat-raised-button color="secondary" (click)="addExercise()">
             <mat-icon>add</mat-icon>
-            Add Exercise
+            {{ 'common.addExercise' | translate }}
           </button>
         </div>
 
@@ -97,7 +99,7 @@ import { SafeResourcePipe } from '../../pipes/safe-resource.pipe';
               <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
                 <div class="w-full h-24 md:h-32 overflow-hidden rounded">
                   <ng-container *ngIf="isImage(ex.get('resourceLink')?.value || ''); else mediaIframe">
-                    <img [src]="ex.get('resourceLink')?.value" alt="Exercise" class="w-full h-full object-cover" />
+                    <img [src]="ex.get('resourceLink')?.value" [alt]="'common.exercise' | translate" class="w-full h-full object-cover" />
                   </ng-container>
                   <ng-template #mediaIframe>
                     <ng-container *ngIf="ex.get('resourceLink')?.value; else mediaPlaceholder">
@@ -111,19 +113,21 @@ import { SafeResourcePipe } from '../../pipes/safe-resource.pipe';
 
                 <div class="space-y-1">
                   <div class="text-base font-semibold leading-tight truncate">{{ ex.get('title')?.value }}</div>
-                  <div class="text-sm text-gray-600">BPM: {{ ex.get('bpm')?.value || 0 }}</div>
-                  <div class="text-sm text-gray-600">Duration: {{ ex.get('durationMinutes')?.value || 0 }}m {{ ex.get('durationSeconds')?.value || 0 }}s</div>
-                  <div class="text-sm text-gray-600" *ngIf="(ex.get('breakSeconds')?.value || 0) > 0">Break: {{ ex.get('breakSeconds')?.value }}s</div>
+                  <div class="text-sm text-gray-600">{{ 'common.bpm' | translate }}: {{ ex.get('bpm')?.value || 0 }}</div>
+                  <div class="text-sm text-gray-600">{{ 'common.duration' | translate }}: {{ ex.get('durationMinutes')?.value || 0 }}m {{ ex.get('durationSeconds')?.value || 0 }}s</div>
+                  <div class="text-sm text-gray-600" *ngIf="(ex.get('breakSeconds')?.value || 0) > 0">{{ 'common.break' | translate }}: {{ ex.get('breakSeconds')?.value }}s</div>
+                  <div class="text-sm text-gray-600">{{ 'common.beatAccent' | translate }}: {{ ex.get('beatStyle')?.value || 'none' }}</div>
+                  <div class="text-sm text-gray-600">{{ 'dialogs.exercise.prepMeasures' | translate }}: {{ ex.get('prepMeasures')?.value ?? 2 }} {{ 'common.measures' | translate }}</div>
                 </div>
 
                 <div class="flex flex-col gap-2 items-end">
                   <button mat-stroked-button (click)="editExercise(i)">
                     <mat-icon>edit</mat-icon>
-                    Edit
+                    {{ 'common.edit' | translate }}
                   </button>
                   <button mat-stroked-button color="warn" (click)="removeExercise(i)">
                     <mat-icon>delete</mat-icon>
-                    Remove
+                    {{ 'common.remove' | translate }}
                   </button>
                 </div>
               </div>
@@ -237,8 +241,8 @@ export class TrainingEditorComponent {
 
   addExercise() {
     const id = (this.exercises.length > 0 ? Math.max(...this.exercises.controls.map(g => g.get('id')?.value as number)) + 1 : 1);
-    const ex: Exercise = { id, title: 'Exercise', bpm: 0, durationMinutes: 0, durationSeconds: 0, breakSeconds: 10 };
-    const ref = this.dialog.open(ExerciseDialogComponent, { data: ex, width: '600px' });
+    const ex: Exercise = { id, title: 'Exercise', bpm: 0, durationMinutes: 0, durationSeconds: 0, breakSeconds: 10, beatStyle: 'none', prepMeasures: 2 };
+    const ref = this.dialog.open(ExerciseDialogComponent, { data: ex, width: '750px' });
     ref.afterClosed().subscribe(result => {
       if (result) {
         const g = this.exerciseGroup(result as Exercise);
@@ -259,9 +263,11 @@ export class TrainingEditorComponent {
       bpm: group.get('bpm')?.value as number,
       durationMinutes: group.get('durationMinutes')?.value as number,
       durationSeconds: group.get('durationSeconds')?.value as number,
-      breakSeconds: group.get('breakSeconds')?.value as number
+      breakSeconds: group.get('breakSeconds')?.value as number,
+      beatStyle: group.get('beatStyle')?.value as Exercise['beatStyle'],
+      prepMeasures: group.get('prepMeasures')?.value as 0 | 1 | 2
     };
-    const ref = this.dialog.open(ExerciseDialogComponent, { data: current, width: '600px' });
+    const ref = this.dialog.open(ExerciseDialogComponent, { data: current, width: '750px' });
     ref.afterClosed().subscribe(result => {
       if (result) {
         const updated = result as Exercise;
@@ -271,7 +277,9 @@ export class TrainingEditorComponent {
           bpm: updated.bpm,
           durationMinutes: updated.durationMinutes,
           durationSeconds: updated.durationSeconds,
-          breakSeconds: updated.breakSeconds
+          breakSeconds: updated.breakSeconds,
+          beatStyle: updated.beatStyle ?? 'none'
+          , prepMeasures: updated.prepMeasures ?? 2
         });
         this.tryAutoFillDuration(group);
         this.unsaved.set(true);
@@ -371,7 +379,9 @@ export class TrainingEditorComponent {
       bpm: [e.bpm, [Validators.min(0)]],
       durationMinutes: [e.durationMinutes, [Validators.min(0)]],
       durationSeconds: [e.durationSeconds, [Validators.min(0)]],
-      breakSeconds: [e.breakSeconds, [Validators.min(5)]]
+      breakSeconds: [e.breakSeconds, [Validators.min(5)]],
+      beatStyle: [e.beatStyle ?? 'none'],
+      prepMeasures: [e.prepMeasures ?? 2]
     });
   }
 

@@ -40,9 +40,64 @@
     "title": "Painel",
     "logout": "Sair"
   },
+  "common": {
+    "back": "Voltar",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "metronome": "Metrônomo",
+    "title": "Título",
+    "owner": "Proprietário",
+    "cover": "Capa",
+    "coverUrl": "URL da capa",
+    "edit": "Editar",
+    "uploadImage": "Carregar imagem",
+    "active": "Ativo",
+    "exercises": "Exercícios",
+    "addExercise": "Adicionar exercício",
+    "exercise": "Exercício",
+    "bpm": "BPM",
+    "minutes": "Minutos",
+    "seconds": "Segundos",
+    "breakSeconds": "Intervalo (segundos)",
+    "duration": "Duração",
+    "break": "Intervalo",
+    "beatAccent": "Acento de compasso",
+    "resource": "Recurso",
+    "resourceUrl": "URL do recurso",
+    "remove": "Remover",
+    "measures": "compasso(s)"
+  },
+  "dialogs": {
+    "training": {
+      "title": "Treino"
+    },
+    "exercise": {
+      "title": "Exercício",
+      "prepMeasures": "Compassos de preparação"
+    }
+  },
+  "prepMeasures": {
+    "two": "Dois",
+    "one": "Um",
+    "none": "Nenhum"
+  },
+  "beat": {
+    "none": "Nenhum",
+    "4_4": "4/4",
+    "3_4": "3/4",
+    "2_4": "2/4"
+  },
   "runner": {
     "exitTraining": "Sair do treino",
     "playAgain": "Reproduzir novamente",
+    "noMedia": "Sem mídia",
+    "previous": "Anterior",
+    "play": "Tocar",
+    "pause": "Pausar",
+    "next": "Próximo",
+    "finish": "Finalizar",
+    "playOrPause": "Tocar ou Pausar",
+    "nextOrFinish": "Próximo ou Finalizar",
     "prep": {
       "getReady": "Prepare-se",
       "restTime": "Tempo de descanso",

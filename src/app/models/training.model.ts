@@ -6,6 +6,8 @@ export interface Exercise {
   durationMinutes: number;
   durationSeconds: number;
   breakSeconds: number;
+  beatStyle?: 'none' | '4/4' | '3/4' | '2/4';
+  prepMeasures?: 0 | 1 | 2;
 }
 
 export interface Training {

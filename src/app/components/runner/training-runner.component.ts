@@ -41,21 +41,21 @@ type MediaType = 'image' | 'iframe' | 'none';
             <img [src]="current()?.resourceLink" [alt]="current()?.title || 'Exercise image'" class="block h-full w-auto max-h-full object-contain m-auto" />
           </div>
           <iframe *ngSwitchCase="'iframe'" [src]="resolveMediaSrc(current()?.resourceLink) | safeResource" [attr.id]="videoIframeId()" class="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-          <div *ngSwitchDefault class="text-gray-400">No media</div>
+          <div *ngSwitchDefault class="text-gray-400">{{ 'runner.noMedia' | translate }}</div>
         </ng-container>
         <div *ngIf="isVideoCurrent() && replayOverlay()" class="absolute inset-0 bg-black/100 flex items-center justify-center z-10">
           <button mat-raised-button color="primary" (click)="playAgain()">{{ 'runner.playAgain' | translate }}</button>
         </div>
         <div class="runner-overlays-left absolute left-3 bottom-3 z-20">
-          <button *ngIf="!isFirst()" mat-mini-fab (click)="prev()" aria-label="Previous" class="prev-fab">
+          <button *ngIf="!isFirst()" mat-mini-fab (click)="prev()" [attr.aria-label]="'runner.previous' | translate" class="prev-fab">
             <mat-icon>skip_previous</mat-icon>
           </button>
         </div>
         <div class="runner-overlays-right absolute right-3 bottom-3 flex flex-col items-end gap-3 z-20">
-          <button *ngIf="!isVideoCurrent()" mat-mini-fab color="primary" (click)="toggle()" aria-label="Play or Pause" class="play-fab">
+          <button *ngIf="!isVideoCurrent()" mat-mini-fab color="primary" (click)="toggle()" [attr.aria-label]="'runner.playOrPause' | translate" class="play-fab">
             <mat-icon>{{ isPlayingCombined() ? 'pause' : 'play_arrow' }}</mat-icon>
           </button>
-          <button mat-mini-fab (click)="nextOrFinish()" aria-label="Next or Finish" class="relative overflow-visible next-fab">
+          <button mat-mini-fab (click)="nextOrFinish()" [attr.aria-label]="'runner.nextOrFinish' | translate" class="relative overflow-visible next-fab">
             <mat-icon>{{ isLast() ? 'check' : 'skip_next' }}</mat-icon>
             <span *ngIf="nextHint() && (isVideoCurrent() ? replayOverlay() : (isLast() || !autoplay()))" class="pointer-events-none absolute -inset-1 hint-ring rounded-full ring-2 ring-sky-500 animate-ping"></span>
             <span *ngIf="nextHint() && (isVideoCurrent() ? replayOverlay() : (isLast() || !autoplay()))" class="pointer-events-none absolute -inset-1 hint-ring rounded-full ring-2 ring-sky-400"></span>
@@ -70,15 +70,15 @@ type MediaType = 'image' | 'iframe' | 'none';
         <div class="flex items-center justify-center space-x-6">
           <button *ngIf="!isFirst()" mat-raised-button (click)="prev()" class="prev-btn">
             <mat-icon>skip_previous</mat-icon>
-            Previous
+            {{ 'runner.previous' | translate }}
           </button>
           <button *ngIf="!isVideoCurrent()" mat-raised-button color="primary" (click)="toggle()" class="play-btn">
             <mat-icon>{{ isPlayingCombined() ? 'pause' : 'play_arrow' }}</mat-icon>
-            {{ isPlayingCombined() ? 'Pause' : 'Play' }}
+            {{ isPlayingCombined() ? ('runner.pause' | translate) : ('runner.play' | translate) }}
           </button>
           <button mat-raised-button class="relative overflow-visible next-btn" (click)="nextOrFinish()">
             <mat-icon>{{ isLast() ? 'check' : 'skip_next' }}</mat-icon>
-            {{ isLast() ? 'Finish' : 'Next' }}
+            {{ isLast() ? ('runner.finish' | translate) : ('runner.next' | translate) }}
             <span *ngIf="nextHint() && (isVideoCurrent() ? replayOverlay() : (isLast() || !autoplay()))" class="pointer-events-none absolute -inset-1 hint-ring rounded-full ring-2 ring-sky-500 animate-ping"></span>
             <span *ngIf="nextHint() && (isVideoCurrent() ? replayOverlay() : (isLast() || !autoplay()))" class="pointer-events-none absolute -inset-1 hint-ring rounded-full ring-2 ring-sky-400"></span>
           </button>
@@ -441,6 +441,7 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
   toggle() {
     if (this.isVideoCurrent()) return;
     const bpm = this.current()?.bpm ?? 0;
+    const style: NonNullable<Exercise['beatStyle']> = this.current()?.beatStyle ?? 'none';
     if (this.isPlayingCombined()) {
       if (this.timerId) clearInterval(this.timerId);
       this.timerPaused.set(true);
@@ -450,10 +451,10 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
         this.resumeTimer();
       }
       if (bpm > 0) {
+        this.metro.setBeatStyle(style);
         if (this.metro.isPlaying()) {
           if (this.metro.currentBpm() !== bpm) {
-            this.metro.stop();
-            this.metro.start(bpm);
+            this.metro.setBpm(bpm);
           }
         } else {
           this.metro.start(bpm);
@@ -480,95 +481,7 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
         this.remaining.set(r - 1);
       } else {
         clearInterval(this.timerId);
-        this.metro.stop();
-        if (this.isVideoCurrent()) {
-          return;
-        }
-        if (this.autoplay() && this.training && this.index() + 1 < this.training.exercises.length) {
-          const nextEx = this.nextExercise();
-          const nextLink = nextEx?.resourceLink;
-          const nextIsVideo = this.mediaType(nextLink) === 'iframe';
-          const breakSecRaw = ex.breakSeconds ?? 0;
-          if (nextIsVideo) {
-            this.isPrep.set(false);
-            this.shouldAutoplay.set(true);
-            this.index.set(this.index() + 1);
-            this.resetTimer();
-            this.nextHint.set(false);
-            return;
-          }
-          if (breakSecRaw <= 0) {
-            this.isPrep.set(false);
-            this.shouldAutoplay.set(nextIsVideo);
-            this.index.set(this.index() + 1);
-            this.resetTimer();
-            this.nextHint.set(false);
-            return;
-          }
-          const breakSec = Math.max(breakSecRaw, 5);
-          const targetIdx = this.index() + 1;
-          const nextLinkPrepInit = this.training?.exercises[targetIdx]?.resourceLink;
-          const nextIsImagePrepInit = this.mediaType(nextLinkPrepInit) === 'image';
-          const initialPrepPhase = (breakSecRaw <= 5) && nextIsImagePrepInit;
-          this.isPrep.set(true);
-          this.prepPhase.set(initialPrepPhase ? 'prep' : 'rest');
-          this.prepTargetIndex.set(targetIdx);
-          this.prepRemaining.set(breakSec);
-          if (initialPrepPhase) {
-            this.index.set(targetIdx);
-            this.shouldAutoplay.set(false);
-          }
-          if (this.prepTimerId) clearInterval(this.prepTimerId);
-          this.metro.stop();
-          let metroStartedForPrep = false;
-          this.prepTimerId = setInterval(() => {
-            const r2 = this.prepRemaining();
-            if (!metroStartedForPrep && r2 === 5) {
-              const targetIdx = this.prepTargetIndex();
-              const nextEx2 = typeof targetIdx === 'number' ? this.training?.exercises[targetIdx] : this.nextExercise();
-              const nbpm = nextEx2?.bpm ?? 0;
-              if (nbpm > 0) {
-                if (this.metro.isPlaying()) {
-                  if (this.metro.currentBpm() !== nbpm) {
-                    this.metro.stop();
-                    this.metro.start(nbpm);
-                  }
-                } else {
-                  this.metro.start(nbpm);
-                }
-              } else {
-                this.metro.stop();
-              }
-              this.prepPhase.set('prep');
-              const nextLinkPrep = typeof targetIdx === 'number' ? this.training?.exercises[targetIdx]?.resourceLink : undefined;
-              const nextIsImagePrep = this.mediaType(nextLinkPrep) === 'image';
-              if (nextIsImagePrep && typeof targetIdx === 'number') {
-                this.index.set(targetIdx);
-                this.shouldAutoplay.set(false);
-              }
-              metroStartedForPrep = true;
-            }
-            if (r2 > 0) {
-              this.prepRemaining.set(r2 - 1);
-            } else {
-              clearInterval(this.prepTimerId);
-              this.isPrep.set(false);
-              const targetIdx2 = this.prepTargetIndex();
-              const nextLink2 = typeof targetIdx2 === 'number' ? this.training?.exercises[targetIdx2]?.resourceLink : this.nextExercise()?.resourceLink;
-              const nextIsVideo2 = this.mediaType(nextLink2) === 'iframe';
-              this.shouldAutoplay.set(nextIsVideo2);
-              if (typeof targetIdx2 === 'number') {
-                this.index.set(targetIdx2);
-              } else {
-                this.index.set(this.index() + 1);
-              }
-              this.resetTimer();
-            }
-          }, 1000);
-          this.nextHint.set(false);
-        } else {
-          this.nextHint.set(true);
-        }
+        this.finishExerciseAtMeasureBoundary();
       }
     }, 1000);
   }
@@ -588,97 +501,7 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
         this.remaining.set(r - 1);
       } else {
         clearInterval(this.timerId);
-        this.metro.stop();
-        if (this.isVideoCurrent()) {
-          return;
-        }
-        if (this.autoplay() && this.training && this.index() + 1 < this.training.exercises.length) {
-          const nextEx = this.nextExercise();
-          const nextLink = nextEx?.resourceLink;
-          const nextIsVideo = this.mediaType(nextLink) === 'iframe';
-          const breakSecRaw = ex.breakSeconds ?? 0;
-          if (nextIsVideo) {
-            this.isPrep.set(false);
-            this.shouldAutoplay.set(true);
-            this.index.set(this.index() + 1);
-            this.resetTimer();
-            this.nextHint.set(false);
-            return;
-          }
-          if (breakSecRaw <= 0) {
-            this.isPrep.set(false);
-            this.shouldAutoplay.set(nextIsVideo);
-            this.index.set(this.index() + 1);
-            this.resetTimer();
-            this.nextHint.set(false);
-            return;
-          }
-          const breakSec = Math.max(breakSecRaw, 5);
-          const targetIdx = this.index() + 1;
-          const nextLinkPrepInit = this.training?.exercises[targetIdx]?.resourceLink;
-          const nextIsImagePrepInit = this.mediaType(nextLinkPrepInit) === 'image';
-          const initialPrepPhase = (breakSecRaw <= 5);
-          this.isPrep.set(true);
-          this.prepPhase.set(initialPrepPhase ? 'prep' : 'rest');
-          this.prepTargetIndex.set(targetIdx);
-          this.prepRemaining.set(breakSec);
-          this.prepBreakSeconds.set(breakSec);
-          if (initialPrepPhase) {
-            this.index.set(targetIdx);
-            this.shouldAutoplay.set(false);
-          }
-          if (this.prepTimerId) clearInterval(this.prepTimerId);
-          this.metro.stop();
-          let metroStartedForPrep = false;
-          this.prepTimerId = setInterval(() => {
-            const r2 = this.prepRemaining();
-            if (!metroStartedForPrep && r2 === 5) {
-              const targetIdx = this.prepTargetIndex();
-              const nextEx2 = typeof targetIdx === 'number' ? this.training?.exercises[targetIdx] : this.nextExercise();
-              const nbpm = nextEx2?.bpm ?? 0;
-              if (nbpm > 0) {
-                if (this.metro.isPlaying()) {
-                  if (this.metro.currentBpm() !== nbpm) {
-                    this.metro.stop();
-                    this.metro.start(nbpm);
-                  }
-                } else {
-                  this.metro.start(nbpm);
-                }
-              } else {
-                this.metro.stop();
-              }
-              this.prepPhase.set('prep');
-              // Swap visual to next exercise image when Get Ready appears
-              const nextLinkPrep = typeof targetIdx === 'number' ? this.training?.exercises[targetIdx]?.resourceLink : undefined;
-              const nextIsImagePrep = this.mediaType(nextLinkPrep) === 'image';
-              if (nextIsImagePrep && typeof targetIdx === 'number') {
-                this.index.set(targetIdx);
-                this.shouldAutoplay.set(false);
-              }
-              metroStartedForPrep = true;
-            }
-            if (r2 > 0) {
-              this.prepRemaining.set(r2 - 1);
-            } else {
-              clearInterval(this.prepTimerId);
-              this.isPrep.set(false);
-              const targetIdx2 = this.prepTargetIndex();
-              const nextLink2 = typeof targetIdx2 === 'number' ? this.training?.exercises[targetIdx2]?.resourceLink : this.nextExercise()?.resourceLink;
-              const nextIsVideo2 = this.mediaType(nextLink2) === 'iframe';
-              this.shouldAutoplay.set(nextIsVideo2);
-              if (typeof targetIdx2 === 'number') {
-                this.index.set(targetIdx2);
-              } else {
-                this.index.set(this.index() + 1);
-              }
-              this.resetTimer();
-            }
-          }, 1000);
-          this.nextHint.set(false);
-        } else {
-          this.nextHint.set(true);
-        }
+        this.finishExerciseAtMeasureBoundary();
       }
     }, 1000);
     if (this.isYouTubeLink(ex.resourceLink ?? '')) {
@@ -689,10 +512,11 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
     if (this.isVideoCurrent()) {
       this.metro.stop();
     } else if (bpm > 0) {
+      const style: NonNullable<Exercise['beatStyle']> = ex.beatStyle ?? 'none';
+      this.metro.setBeatStyle(style);
       if (this.metro.isPlaying()) {
         if (this.metro.currentBpm() !== bpm) {
-          this.metro.stop();
-          this.metro.start(bpm);
+          this.metro.setBpm(bpm);
         }
       } else {
         this.metro.start(bpm);
@@ -819,18 +643,32 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
     const ex = this.current();
     const bpm = ex?.bpm ?? 0;
     this.metro.stop();
+    const stylePrep: NonNullable<Exercise['beatStyle']> = ex?.beatStyle ?? 'none';
+    const beatsPrep = stylePrep === '4/4' ? 4 : stylePrep === '3/4' ? 3 : stylePrep === '2/4' ? 2 : 1;
+    const secondsPerBeatPrep = bpm > 0 ? (60 / bpm) : 0;
+    const measureSecondsPrep = beatsPrep * secondsPerBeatPrep;
+    const measuresToPlayPrep = (ex?.prepMeasures ?? 2);
+    const metroStartThresholdPrep = (bpm > 0 && measuresToPlayPrep > 0)
+      ? Math.min(seconds, Math.max(1, Math.ceil(measuresToPlayPrep * measureSecondsPrep)))
+      : -1;
     this.prepTimerId = setInterval(() => {
       const r = this.prepRemaining();
-      if (r === 5) {
+      if (metroStartThresholdPrep > 0 && r === metroStartThresholdPrep) {
         this.prepPhase.set('prep');
         if (bpm > 0) {
-          if (this.metro.isPlaying()) {
-            if (this.metro.currentBpm() !== bpm) {
-              this.metro.stop();
+          const style: NonNullable<Exercise['beatStyle']> = ex?.beatStyle ?? 'none';
+          const measuresToPlay = (ex?.prepMeasures ?? 2);
+          if (measuresToPlay > 0) {
+            this.metro.startWithAlignment(bpm, style, measuresToPlay, r);
+          } else {
+            this.metro.setBeatStyle(style);
+            if (this.metro.isPlaying()) {
+              if (this.metro.currentBpm() !== bpm) {
+                this.metro.setBpm(bpm);
+              }
+            } else {
               this.metro.start(bpm);
             }
-          } else {
-            this.metro.start(bpm);
           }
         } else {
           this.metro.stop();
@@ -844,6 +682,141 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
         this.resetTimer();
       }
     }, 1000);
+  }
+
+  private finishExerciseAtMeasureBoundary() {
+    const ex = this.current();
+    if (!ex) return;
+    if (this.isVideoCurrent() || !this.metro.isPlaying() || (this.metro.currentBpm() <= 0)) {
+      this.metro.stop();
+      this.performExerciseEndOutputs();
+      return;
+    }
+    const lookaheadSec = 0.11;
+    let delaySec = Math.max(0, this.metro.secondsUntilMeasureEnd());
+    if (delaySec <= lookaheadSec) {
+      delaySec = 0;
+    } else {
+      delaySec = delaySec - lookaheadSec;
+    }
+    const delayMs = Math.max(0, Math.ceil(delaySec * 1000));
+    if (delayMs <= 0) {
+      this.metro.stop();
+      this.performExerciseEndOutputs();
+      return;
+    }
+    setTimeout(() => {
+      this.metro.stop();
+      this.performExerciseEndOutputs();
+    }, delayMs);
+  }
+
+  private performExerciseEndOutputs() {
+    const ex = this.current();
+    if (!ex) return;
+    if (this.isVideoCurrent()) {
+      return;
+    }
+    if (this.autoplay() && this.training && this.index() + 1 < this.training.exercises.length) {
+      const nextEx = this.nextExercise();
+      const nextLink = nextEx?.resourceLink;
+      const nextIsVideo = this.mediaType(nextLink) === 'iframe';
+      const breakSecRaw = ex.breakSeconds ?? 0;
+      if (nextIsVideo) {
+        this.isPrep.set(false);
+        this.shouldAutoplay.set(true);
+        this.index.set(this.index() + 1);
+        this.resetTimer();
+        this.nextHint.set(false);
+        return;
+      }
+      if (breakSecRaw <= 0) {
+        this.isPrep.set(false);
+        this.shouldAutoplay.set(nextIsVideo);
+        this.index.set(this.index() + 1);
+        this.resetTimer();
+        this.nextHint.set(false);
+        return;
+      }
+      const breakSec = Math.max(breakSecRaw, 1);
+      const targetIdx = this.index() + 1;
+      const nextLinkPrepInit = this.training?.exercises[targetIdx]?.resourceLink;
+      const nextIsImagePrepInit = this.mediaType(nextLinkPrepInit) === 'image';
+      const initialPrepPhase = (breakSec <= 5) && nextIsImagePrepInit;
+      this.isPrep.set(true);
+      this.prepPhase.set(initialPrepPhase ? 'prep' : 'rest');
+      this.prepTargetIndex.set(targetIdx);
+      this.prepRemaining.set(breakSec);
+      this.prepBreakSeconds.set(breakSec);
+      if (initialPrepPhase) {
+        this.index.set(targetIdx);
+        this.shouldAutoplay.set(false);
+      }
+      if (this.prepTimerId) clearInterval(this.prepTimerId);
+      let metroStartedForPrep = false;
+      const upcomingForPrep = typeof targetIdx === 'number' ? this.training?.exercises[targetIdx] : this.nextExercise();
+      const nbpmPrep = upcomingForPrep?.bpm ?? 0;
+      const nstylePrep: NonNullable<Exercise['beatStyle']> = upcomingForPrep?.beatStyle ?? 'none';
+      const beatsPrep = nstylePrep === '4/4' ? 4 : nstylePrep === '3/4' ? 3 : nstylePrep === '2/4' ? 2 : 1;
+      const secondsPerBeatPrep = nbpmPrep > 0 ? (60 / nbpmPrep) : 0;
+      const measureSecondsPrep = beatsPrep * secondsPerBeatPrep;
+      const measuresToPlayPrep = (upcomingForPrep?.prepMeasures ?? 2);
+      const metroStartThresholdPrep = (nbpmPrep > 0 && measuresToPlayPrep > 0)
+        ? Math.min(breakSec, Math.max(1, Math.ceil(measuresToPlayPrep * measureSecondsPrep)))
+        : -1;
+      this.prepTimerId = setInterval(() => {
+        const r2 = this.prepRemaining();
+        if (!metroStartedForPrep && metroStartThresholdPrep > 0 && r2 === metroStartThresholdPrep) {
+          const targetIdx2 = this.prepTargetIndex();
+          const nextEx2 = typeof targetIdx2 === 'number' ? this.training?.exercises[targetIdx2] : this.nextExercise();
+          const nbpm = nextEx2?.bpm ?? 0;
+          const measuresToPlay = (nextEx2?.prepMeasures ?? 2);
+          if (nbpm > 0 && measuresToPlay > 0) {
+            const nstyle: NonNullable<Exercise['beatStyle']> = nextEx2?.beatStyle ?? 'none';
+            this.metro.startWithAlignment(nbpm, nstyle, measuresToPlay, r2);
+          } else if (nbpm > 0) {
+            const nstyle: NonNullable<Exercise['beatStyle']> = nextEx2?.beatStyle ?? 'none';
+            this.metro.setBeatStyle(nstyle);
+            if (this.metro.isPlaying()) {
+              if (this.metro.currentBpm() !== nbpm) {
+                this.metro.setBpm(nbpm);
+              }
+            } else {
+              this.metro.start(nbpm);
+            }
+          } else {
+            this.metro.stop();
+          }
+          this.prepPhase.set('prep');
+          const nextLinkPrep = typeof targetIdx2 === 'number' ? this.training?.exercises[targetIdx2]?.resourceLink : undefined;
+          const nextIsImagePrep = this.mediaType(nextLinkPrep) === 'image';
+          if (nextIsImagePrep && typeof targetIdx2 === 'number') {
+            this.index.set(targetIdx2);
+            this.shouldAutoplay.set(false);
+          }
+          metroStartedForPrep = true;
+        }
+        if (r2 > 0) {
+          this.prepRemaining.set(r2 - 1);
+        } else {
+          clearInterval(this.prepTimerId);
+          this.isPrep.set(false);
+          const targetIdx3 = this.prepTargetIndex();
+          const nextLink3 = typeof targetIdx3 === 'number' ? this.training?.exercises[targetIdx3]?.resourceLink : this.nextExercise()?.resourceLink;
+          const nextIsVideo3 = this.mediaType(nextLink3) === 'iframe';
+          this.shouldAutoplay.set(nextIsVideo3);
+          if (typeof targetIdx3 === 'number') {
+            this.index.set(targetIdx3);
+          } else {
+            this.index.set(this.index() + 1);
+          }
+          this.resetTimer();
+        }
+      }, 1000);
+      this.nextHint.set(false);
+    } else {
+      this.nextHint.set(true);
+    }
   }
 
   prepNextTitle() {
