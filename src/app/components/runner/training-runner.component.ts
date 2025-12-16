@@ -20,7 +20,7 @@ type MediaType = 'image' | 'iframe' | 'none';
   imports: [CommonModule, SafeResourcePipe, MatButtonModule, MatIconModule, PrepOverlayComponent, TranslateModule],
   template: `
     <div class="h-[100svh] overflow-hidden flex flex-col">
-      <app-prep-overlay *ngIf="isPrep() && !isNextVideo()" [seconds]="prepRemaining()" [nextTitle]="prepNextTitle()" [bpm]="prepBpm()" [message]="prepMessage()" [beatStyle]="prepBeatStyle()" [prepMeasures]="prepMeasures()" [beatTick]="metro.beatTick()" [beatInMeasure]="metro.beatInMeasure()" [breakSeconds]="prepBreakSeconds()" [autoplay]="autoplay()"></app-prep-overlay>
+      <app-prep-overlay *ngIf="isPrep() && !isNextVideo()" [seconds]="prepRemaining()" [nextTitle]="prepNextTitle()" [bpm]="prepBpm()" [phase]="prepPhase()" [beatStyle]="prepBeatStyle()" [prepMeasures]="prepMeasures()" [beatTick]="metro.beatTick()" [beatInMeasure]="metro.beatInMeasure()" [breakSeconds]="prepBreakSeconds()" [autoplay]="autoplay()"></app-prep-overlay>
       <div class="h-14 pr-3 pl-0 border-b bg-white shrink-0 relative flex items-center justify-center">
         <div class="absolute left-3">
           <button mat-raised-button color="primary" (click)="exit()">
@@ -750,7 +750,12 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
       this.prepTargetIndex.set(targetIdx);
       this.prepRemaining.set(breakSec);
       this.prepBreakSeconds.set(breakSec);
-      if (initialPrepPhase) {
+      
+      // If next is image, update index immediately so it loads behind overlay
+      if (nextIsImagePrepInit) {
+        this.index.set(targetIdx);
+        this.shouldAutoplay.set(false);
+      } else if (initialPrepPhase) {
         this.index.set(targetIdx);
         this.shouldAutoplay.set(false);
       }
@@ -850,10 +855,6 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
     const idx = this.prepTargetIndex();
     if (idx === null) return this.current()?.prepMeasures ?? 0;
     return this.training.exercises[idx]?.prepMeasures ?? (this.current()?.prepMeasures ?? 0);
-  }
-
-  prepMessage() {
-    return this.prepPhase() === 'rest' ? 'runner.prep.restTime' : 'runner.prep.getReady';
   }
 
   remainingMinutes() {
