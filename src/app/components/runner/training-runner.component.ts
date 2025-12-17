@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -61,30 +61,31 @@ type MediaType = 'image' | 'iframe' | 'none';
             <span *ngIf="nextHint() && (isVideoCurrent() ? replayOverlay() : (isLast() || !autoplay()))" class="pointer-events-none absolute -inset-1 hint-ring rounded-full ring-2 ring-sky-400"></span>
           </button>
         </div>
-        <div *ngIf="!isVideoCurrent() && remaining() > 0" class="runner-timer-top-right absolute right-3 top-3 z-20 bg-white/80 text-black rounded px-3 py-1 text-lg">
-          {{ remainingMinutes() }}:{{ remainingSeconds() | number:'2.0-0' }}
-        </div>
+
       </div>
 
-      <div class="p-3 bg-white border-t shrink-0 runner-controls-bottom">
-        <div class="flex items-center justify-center space-x-6">
-          <button *ngIf="!isFirst()" mat-raised-button (click)="prev()" class="prev-btn">
-            <mat-icon>skip_previous</mat-icon>
-            {{ 'runner.previous' | translate }}
-          </button>
-          <button *ngIf="!isVideoCurrent()" mat-raised-button color="primary" (click)="toggle()" class="play-btn">
-            <mat-icon>{{ isPlayingCombined() ? 'pause' : 'play_arrow' }}</mat-icon>
-            {{ isPlayingCombined() ? ('runner.pause' | translate) : ('runner.play' | translate) }}
-          </button>
-          <button mat-raised-button class="relative overflow-visible next-btn" (click)="nextOrFinish()">
-            <mat-icon>{{ isLast() ? 'check' : 'skip_next' }}</mat-icon>
-            {{ isLast() ? ('runner.finish' | translate) : ('runner.next' | translate) }}
-            <span *ngIf="nextHint() && (isVideoCurrent() ? replayOverlay() : (isLast() || !autoplay()))" class="pointer-events-none absolute -inset-1 hint-ring rounded-full ring-2 ring-sky-500 animate-ping"></span>
-            <span *ngIf="nextHint() && (isVideoCurrent() ? replayOverlay() : (isLast() || !autoplay()))" class="pointer-events-none absolute -inset-1 hint-ring rounded-full ring-2 ring-sky-400"></span>
-          </button>
-        </div>
-        <div class="mt-4 text-center text-2xl" [class.hidden]="isVideoCurrent()">
-          {{ remainingMinutes() }}:{{ remainingSeconds() | number:'2.0-0' }}
+      <div *ngIf="!isVideoCurrent() && totalDuration() > 0" class="w-full h-1.5 bg-gray-200 shrink-0">
+        <div class="h-full bg-[#1A73A8] transition-all duration-1000 ease-linear" [style.width.%]="progressPercent()"></div>
+      </div>
+
+      <div class="bg-white border-t shrink-0 runner-controls-bottom relative">
+        <div class="p-3">
+          <div class="flex items-center justify-center space-x-6">
+            <button *ngIf="!isFirst()" mat-raised-button (click)="prev()" class="prev-btn">
+              <mat-icon>skip_previous</mat-icon>
+              {{ 'runner.previous' | translate }}
+            </button>
+            <button *ngIf="!isVideoCurrent()" mat-raised-button color="primary" (click)="toggle()" class="play-btn">
+              <mat-icon>{{ isPlayingCombined() ? 'pause' : 'play_arrow' }}</mat-icon>
+              {{ isPlayingCombined() ? ('runner.pause' | translate) : ('runner.play' | translate) }}
+            </button>
+            <button mat-raised-button class="relative overflow-visible next-btn" (click)="nextOrFinish()">
+              <mat-icon>{{ isLast() ? 'check' : 'skip_next' }}</mat-icon>
+              {{ isLast() ? ('runner.finish' | translate) : ('runner.next' | translate) }}
+              <span *ngIf="nextHint() && (isVideoCurrent() ? replayOverlay() : (isLast() || !autoplay()))" class="pointer-events-none absolute -inset-1 hint-ring rounded-full ring-2 ring-sky-500 animate-ping"></span>
+              <span *ngIf="nextHint() && (isVideoCurrent() ? replayOverlay() : (isLast() || !autoplay()))" class="pointer-events-none absolute -inset-1 hint-ring rounded-full ring-2 ring-sky-400"></span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -124,6 +125,7 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
   training?: Training;
   index = signal(0);
   remaining = signal(0);
+  totalDuration = signal(0);
   isPrep = signal(false);
   prepRemaining = signal(0);
   prepBreakSeconds = signal(0);
@@ -137,6 +139,17 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
   private prepTimerId?: any;
   prepPhase = signal<'rest' | 'prep'>('prep');
   prepTargetIndex = signal<number | null>(null);
+
+  progressPercent = computed(() => {
+    if (this.isPrep()) return 100;
+    const t = this.totalDuration();
+    if (t <= 0) return 0;
+    const r = this.remaining();
+    // Target the end of the current second interval to ensure continuous movement
+    // combined with CSS transition-duration-1000
+    const nextSec = Math.max(0, r - 1);
+    return (nextSec / t) * 100;
+  });
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
@@ -470,6 +483,13 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
     return ((!this.isVideoCurrent()) && (!this.timerPaused()) && this.remaining() > 0) || this.metro.isPlaying();
   }
 
+  private primeProgressBar(ex?: Exercise) {
+    if (!ex) return;
+    const total = ex.durationMinutes * 60 + ex.durationSeconds;
+    this.remaining.set(total);
+    this.totalDuration.set(total);
+  }
+
   private resumeTimer() {
     const ex = this.current();
     if (!ex) return;
@@ -490,8 +510,7 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
     const ex = this.current();
     if (!ex) return;
     this.replayOverlay.set(false);
-    const total = ex.durationMinutes * 60 + ex.durationSeconds;
-    this.remaining.set(total);
+    this.primeProgressBar(ex);
     this.nextHint.set(false);
     this.timerPaused.set(false);
     if (this.timerId) clearInterval(this.timerId);
@@ -625,6 +644,7 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
 
   private startPrep(seconds = 5) {
     if (!this.training || !this.current()) return this.resetTimer();
+    this.primeProgressBar(this.current());
     const link = this.current()?.resourceLink;
     if (this.mediaType(link) === 'iframe') {
       this.isPrep.set(false);
@@ -751,6 +771,9 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
       this.prepRemaining.set(breakSec);
       this.prepBreakSeconds.set(breakSec);
       
+      const upcomingForPrep = typeof targetIdx === 'number' ? this.training?.exercises[targetIdx] : this.nextExercise();
+      this.primeProgressBar(upcomingForPrep);
+
       // If next is image, update index immediately so it loads behind overlay
       if (nextIsImagePrepInit) {
         this.index.set(targetIdx);
@@ -761,7 +784,7 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
       }
       if (this.prepTimerId) clearInterval(this.prepTimerId);
       let metroStartedForPrep = false;
-      const upcomingForPrep = typeof targetIdx === 'number' ? this.training?.exercises[targetIdx] : this.nextExercise();
+      // const upcomingForPrep = typeof targetIdx === 'number' ? this.training?.exercises[targetIdx] : this.nextExercise(); // MOVED UP
       const nbpmPrep = upcomingForPrep?.bpm ?? 0;
       const nstylePrep: NonNullable<Exercise['beatStyle']> = upcomingForPrep?.beatStyle ?? 'none';
       const beatsPrep = nstylePrep === '4/4' ? 4 : nstylePrep === '3/4' ? 3 : nstylePrep === '2/4' ? 2 : 1;
