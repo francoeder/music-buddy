@@ -181,6 +181,15 @@ export class MetronomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Restore BPM from localStorage
+    const savedBpm = localStorage.getItem('music-buddy-metronome-bpm');
+    if (savedBpm) {
+      const bpm = parseInt(savedBpm, 10);
+      if (!isNaN(bpm) && bpm > 0) {
+        this.metro.setBpm(bpm);
+      }
+    }
+
     // Ensure we start with a default BPM if 0
     if (this.metro.currentBpm() === 0) {
       this.metro.setBpm(120);
@@ -205,10 +214,11 @@ export class MetronomeComponent implements OnInit, OnDestroy {
 
   setBpm(val: number) {
     this.metro.setBpm(val);
+    localStorage.setItem('music-buddy-metronome-bpm', val.toString());
   }
 
   adjustBpm(delta: number) {
-    this.metro.setBpm(this.bpm + delta);
+    this.setBpm(this.bpm + delta);
   }
 
   setSignature(style: 'none' | '4/4' | '3/4' | '2/4') {

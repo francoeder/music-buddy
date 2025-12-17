@@ -43,7 +43,6 @@ export class MetronomeService {
 
   stop() {
     this.isPlaying.set(false);
-    this.currentBpm.set(0);
     this.beatIndex = 0;
     this.beatTick.set(0);
     this.beatInMeasure.set(1);
