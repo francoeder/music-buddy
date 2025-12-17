@@ -25,7 +25,7 @@ type OverlayViewMode = 'rest' | 'get-ready' | 'counting' | 'go';
           <!-- A altura fixa (h-...) garante que a troca de conteúdo não mova os elementos ao redor -->
           <!-- Ajuste de alturas: Mobile Portrait (180px), Mobile Landscape (140px), Tablet (220px), Desktop Landscape (>220px) -->
           <!-- lg:landscape define o ponto de corte para Desktop (Largura > 1024px) -->
-          <div class="flex flex-col items-center justify-center w-full h-[180px] sm:h-[220px] landscape:h-[140px] md:landscape:h-[140px] lg:landscape:h-[240px] mb-2 landscape:mb-0 md:landscape:mb-0 lg:landscape:mb-2">
+          <div class="relative flex flex-col items-center justify-center w-full h-[180px] sm:h-[220px] landscape:h-[140px] md:landscape:h-[140px] lg:landscape:h-[240px] mb-2 landscape:mb-0 md:landscape:mb-0 lg:landscape:mb-2">
             @switch (currentView) {
               @case ('rest') {
                 <!-- Barra de Progresso -->
@@ -48,9 +48,11 @@ type OverlayViewMode = 'rest' | 'get-ready' | 'counting' | 'go';
                 }
               }
               @case ('counting') {
-                <div class="font-bold text-7xl landscape:text-6xl sm:text-8xl md:text-9xl md:landscape:text-6xl lg:landscape:text-9xl leading-none countdown-anim"
-                     [ngClass]="countColorClass">
-                  {{ countDisplay }}
+                <div class="flex flex-col items-center">
+                  <div class="font-bold text-7xl landscape:text-6xl sm:text-8xl md:text-9xl md:landscape:text-6xl lg:landscape:text-9xl leading-none countdown-anim"
+                       [ngClass]="countColorClass">
+                    {{ countDisplay }}
+                  </div>
                 </div>
               }
               @case ('go') {
@@ -59,6 +61,16 @@ type OverlayViewMode = 'rest' | 'get-ready' | 'counting' | 'go';
                 </div>
               }
             }
+
+            <!-- F1 Lights Style Dots (Absolute positioned at bottom of container for stability) -->
+            <div class="absolute bottom-2 left-0 right-0 flex justify-center w-full" *ngIf="prepMeasures > 0">
+               <div class="flex gap-4">
+                 <div *ngFor="let i of measuresArray; trackBy: trackByFn" 
+                      class="w-6 h-6 rounded-full border-2 transition-colors duration-200"
+                      [ngClass]="getLightClass(i)">
+                 </div>
+               </div>
+            </div>
           </div>
 
           <!-- ROW 3: Submensagem (Altura Fixa Rígida) -->
@@ -124,6 +136,7 @@ export class PrepOverlayComponent implements OnChanges, OnInit, OnDestroy {
   
   progressPercent = 100;
   countDisplay: number | null = null;
+  measuresArray: number[] = [];
   
   private beatsPerMeasure = 1;
   private secondsPerBeat = 0;
@@ -150,6 +163,15 @@ export class PrepOverlayComponent implements OnChanges, OnInit, OnDestroy {
     }
   }
 
+  get currentMeasure(): number {
+    if (this.beatTick <= 0) return 0;
+    return Math.floor((this.beatTick - 1) / this.beatsPerMeasure) + 1;
+  }
+
+  trackByFn(index: number, item: number): number {
+    return item;
+  }
+
   get subMessageKey(): string {
     // Usado apenas no modo 'counting'
     // O "Vai!" só deve aparecer no último beat do ÚLTIMO compasso de preparação.
@@ -163,6 +185,31 @@ export class PrepOverlayComponent implements OnChanges, OnInit, OnDestroy {
     }
     
     return GET_READY_KEY;
+  }
+
+  getLightClass(index: number): string {
+    // Se não há metrônomo ou prepMeasures <= 0, isso nem deveria ser chamado, mas...
+    if (!this.hasMetronome) return 'bg-transparent border-gray-400';
+
+    // currentMeasure:
+    // Se tick <= 0 -> 0
+    // Se tick=1..4 (em 4/4) -> 1
+    // ...
+    // Se tick=13..16 (em 4/4, 4 measures) -> 4 (last)
+    
+    // Se estivermos no último compasso:
+    if (this.currentMeasure === this.prepMeasures) {
+      return 'bg-green-500 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]';
+    }
+
+    // Se o compasso atual já passou pelo index:
+    // Ex: index=0 (1o compasso), currentMeasure=1 -> index < currentMeasure (0 < 1) -> TRUE
+    if (index < this.currentMeasure) {
+      return 'bg-red-500 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.6)]';
+    }
+
+    // Default: apagado
+    return 'bg-transparent border-gray-400';
   }
 
   get countColorClass(): string {
@@ -328,6 +375,9 @@ export class PrepOverlayComponent implements OnChanges, OnInit, OnDestroy {
     this.beatsPerMeasure = beatsMap[this.beatStyle] || 1;
     this.secondsPerBeat = this.bpm > 0 ? (60 / this.bpm) : 0;
     this.measureSeconds = this.beatsPerMeasure * this.secondsPerBeat;
+    
+    // Atualiza o array de compassos para evitar recriação a cada ciclo de detecção (melhora performance e animações)
+    this.measuresArray = Array.from({ length: this.prepMeasures }, (_, i) => i);
   }
 
   private metroStartThresholdSeconds(): number {

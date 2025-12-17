@@ -43,9 +43,10 @@ import { Exercise } from '../../models/training.model';
               <mat-form-field appearance="fill" class="w-full col-span-12 md:col-span-4">
                 <mat-label>{{ 'dialogs.exercise.prepMeasures' | translate }}</mat-label>
                 <mat-select formControlName="prepMeasures">
-                  <mat-option [value]="2">{{ 'prepMeasures.two' | translate }}</mat-option>
-                  <mat-option [value]="1">{{ 'prepMeasures.one' | translate }}</mat-option>
                   <mat-option [value]="0">{{ 'prepMeasures.none' | translate }}</mat-option>
+                  <mat-option [value]="1">{{ 'prepMeasures.one' | translate }}</mat-option>
+                  <mat-option [value]="2">{{ 'prepMeasures.two' | translate }}</mat-option>
+                  <mat-option [value]="4">{{ 'prepMeasures.four' | translate }}</mat-option>
                 </mat-select>
               </mat-form-field>
             </div>

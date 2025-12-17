@@ -77,6 +77,7 @@
     }
   },
   "prepMeasures": {
+    "four": "Quatro",
     "two": "Dois",
     "one": "Um",
     "none": "Nenhum"

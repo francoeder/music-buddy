@@ -408,8 +408,9 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
     }
   }
 
-  exit() {
+  async exit() {
     this.metro.stop();
+    await this.unlockLandscape();
     this.router.navigate(['/']);
   }
 
@@ -642,7 +643,7 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
     tryRegister();
   }
 
-  private startPrep(seconds = 5) {
+  private startPrep(bufferSeconds = 5) {
     if (!this.training || !this.current()) return this.resetTimer();
     this.primeProgressBar(this.current());
     const link = this.current()?.resourceLink;
@@ -652,24 +653,31 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
       this.replayOverlay.set(false);
       return this.resetTimer();
     }
-    this.isPrep.set(true);
-    this.prepPhase.set('prep');
-    this.prepTargetIndex.set(this.index());
-    this.prepRemaining.set(seconds);
-    this.prepBreakSeconds.set(seconds);
-    this.nextHint.set(false);
-    if (this.timerId) clearInterval(this.timerId);
-    if (this.prepTimerId) clearInterval(this.prepTimerId);
+
     const ex = this.current();
     const bpm = ex?.bpm ?? 0;
-    this.metro.stop();
     const stylePrep: NonNullable<Exercise['beatStyle']> = ex?.beatStyle ?? 'none';
     const beatsPrep = stylePrep === '4/4' ? 4 : stylePrep === '3/4' ? 3 : stylePrep === '2/4' ? 2 : 1;
     const secondsPerBeatPrep = bpm > 0 ? (60 / bpm) : 0;
     const measureSecondsPrep = beatsPrep * secondsPerBeatPrep;
     const measuresToPlayPrep = (ex?.prepMeasures ?? 2);
     const measuresTimeSecPrep = Math.max(1, Math.ceil(measuresToPlayPrep * measureSecondsPrep));
-    const showReadySec = Math.max(1, Math.min(3, seconds - measuresTimeSecPrep));
+    
+    // Total time = buffer (silence) + count-in time
+    const totalPrepTime = bufferSeconds + measuresTimeSecPrep;
+
+    this.isPrep.set(true);
+    this.prepPhase.set('prep');
+    this.prepTargetIndex.set(this.index());
+    this.prepRemaining.set(totalPrepTime);
+    this.prepBreakSeconds.set(totalPrepTime);
+    this.nextHint.set(false);
+    if (this.timerId) clearInterval(this.timerId);
+    if (this.prepTimerId) clearInterval(this.prepTimerId);
+
+    this.metro.stop();
+    // Logic for showReadySec can be simplified or removed if we rely on remaining time
+    
     const metroStartThresholdPrep = (bpm > 0 && measuresToPlayPrep > 0)
       ? measuresTimeSecPrep
       : -1;
@@ -898,10 +906,38 @@ export class TrainingRunnerComponent implements OnInit, OnDestroy {
 
   private async lockLandscape() {
     try {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (!isMobile) return;
+
+      if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        } else if ((document.documentElement as any).webkitRequestFullscreen) {
+          await (document.documentElement as any).webkitRequestFullscreen();
+        }
+      }
+
       // @ts-ignore
       if (screen.orientation && screen.orientation.lock) {
         // @ts-ignore
         await screen.orientation.lock('landscape');
+      }
+    } catch {}
+  }
+
+  private async unlockLandscape() {
+    try {
+      // @ts-ignore
+      if (screen.orientation && screen.orientation.unlock) {
+        // @ts-ignore
+        screen.orientation.unlock();
+      }
+      if (document.fullscreenElement) {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen();
+        }
       }
     } catch {}
   }
