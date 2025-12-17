@@ -25,6 +25,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
           <mat-icon>menu</mat-icon>
         </button>
         <button mat-button class="ml-3 desktop-only" routerLink="/home"><mat-icon>home</mat-icon> {{ 'nav.home' | translate }}</button>
+        <button mat-button class="ml-1 desktop-only" routerLink="/metronome"><mat-icon>timer</mat-icon> {{ 'nav.metronome' | translate }}</button>
         <button mat-button class="ml-1 desktop-only" [matMenuTriggerFor]="trainingsMenu"><mat-icon>library_music</mat-icon> {{ 'nav.trainings' | translate }}</button>
         <span class="flex-1"></span>
         <mat-menu #trainingsMenu="matMenu">
@@ -39,6 +40,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
         </mat-menu>
         <mat-menu #mobileMenu="matMenu">
           <button mat-menu-item routerLink="/home"><mat-icon>home</mat-icon> {{ 'nav.home' | translate }}</button>
+          <button mat-menu-item routerLink="/metronome"><mat-icon>timer</mat-icon> {{ 'nav.metronome' | translate }}</button>
           <button mat-menu-item routerLink="/trainings"><mat-icon>list</mat-icon> {{ 'nav.availableTrainings' | translate }}</button>
           <button mat-menu-item (click)="createTraining()"><mat-icon>add</mat-icon> {{ 'nav.createTraining' | translate }}</button>
         </mat-menu>

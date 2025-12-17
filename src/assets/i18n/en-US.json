@@ -4,6 +4,7 @@
   },
   "nav": {
     "home": "Home",
+    "metronome": "Metronome",
     "trainings": "Trainings",
     "availableTrainings": "Available Trainings",
     "createTraining": "Create New Training"

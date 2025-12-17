@@ -6,10 +6,12 @@ import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { TrainingEditorComponent } from './features/training-editor/training-editor.component';
 import { TrainingsListComponent } from './features/trainings/trainings-list.component';
+import { MetronomeComponent } from './components/metronome/metronome.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent, canActivate: [AuthGuard] },
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
+  { path: 'metronome', component: MetronomeComponent, canActivate: [AuthGuard] },
   { path: 'trainings', component: TrainingsListComponent, canActivate: [AuthGuard] },
   { path: 'login', component: LoginComponent },
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },

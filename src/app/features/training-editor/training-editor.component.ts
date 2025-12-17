@@ -242,7 +242,7 @@ export class TrainingEditorComponent {
   addExercise() {
     const id = (this.exercises.length > 0 ? Math.max(...this.exercises.controls.map(g => g.get('id')?.value as number)) + 1 : 1);
     const ex: Exercise = { id, title: 'Exercise', bpm: 0, durationMinutes: 0, durationSeconds: 0, breakSeconds: 10, beatStyle: 'none', prepMeasures: 2 };
-    const ref = this.dialog.open(ExerciseDialogComponent, { data: ex, width: '750px' });
+    const ref = this.dialog.open(ExerciseDialogComponent, { data: ex, width: '95vw', maxWidth: '750px' });
     ref.afterClosed().subscribe(result => {
       if (result) {
         const g = this.exerciseGroup(result as Exercise);
@@ -267,7 +267,7 @@ export class TrainingEditorComponent {
       beatStyle: group.get('beatStyle')?.value as Exercise['beatStyle'],
       prepMeasures: group.get('prepMeasures')?.value as 0 | 1 | 2
     };
-    const ref = this.dialog.open(ExerciseDialogComponent, { data: current, width: '750px' });
+    const ref = this.dialog.open(ExerciseDialogComponent, { data: current, width: '95vw', maxWidth: '750px' });
     ref.afterClosed().subscribe(result => {
       if (result) {
         const updated = result as Exercise;

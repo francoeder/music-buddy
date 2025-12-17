@@ -4,6 +4,7 @@
   },
   "nav": {
     "home": "Início",
+    "metronome": "Metrônomo",
     "trainings": "Treinos",
     "availableTrainings": "Treinos disponíveis",
     "createTraining": "Criar novo treino"

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -8,14 +8,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 import { Exercise } from '../../models/training.model';
+import { MetronomeService } from '../../services/metronome.service';
 
 @Component({
   selector: 'app-exercise-dialog',
   standalone: true,
   imports: [CommonModule, MatDialogModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatSelectModule, TranslateModule],
   template: `
-    <div class="min-h-[300px] min-w-[750px]">
+    <div class="min-h-[300px]">
       <mat-dialog-content class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
         <h2 class="text-xl font-semibold">{{ 'dialogs.exercise.title' | translate }}</h2>
         <form [formGroup]="form" class="grid grid-cols-12 gap-3 items-start">
@@ -26,11 +28,22 @@ import { Exercise } from '../../models/training.model';
 
           <fieldset class="col-span-12 border border-indigo-300 rounded p-3">
             <legend class="px-2 text-sm font-medium text-indigo-700">{{ 'common.metronome' | translate }}</legend>
-            <div class="grid grid-cols-12 gap-3">
-              <mat-form-field appearance="fill" class="w-full col-span-6 md:col-span-4">
+            <div class="grid grid-cols-12 gap-3 items-center">
+              <mat-form-field appearance="fill" class="w-full col-span-8 md:col-span-3">
                 <mat-label>{{ 'common.bpm' | translate }}</mat-label>
                 <input matInput type="number" formControlName="bpm" />
               </mat-form-field>
+              
+              <div class="col-span-4 md:col-span-1 flex justify-center">
+                 <button mat-icon-button 
+                         [color]="isPlaying() ? 'warn' : 'primary'" 
+                         (click)="toggleMetronome()"
+                         [disabled]="!form.get('bpm')?.value"
+                         type="button">
+                   <mat-icon>{{ isPlaying() ? 'stop' : 'play_arrow' }}</mat-icon>
+                 </button>
+              </div>
+
               <mat-form-field appearance="fill" class="w-full col-span-12 md:col-span-4">
                 <mat-label>{{ 'common.beatAccent' | translate }}</mat-label>
                 <mat-select formControlName="beatStyle">
@@ -96,12 +109,15 @@ import { Exercise } from '../../models/training.model';
     </div>
   `
 })
-export class ExerciseDialogComponent {
+export class ExerciseDialogComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private data = inject<Exercise>(MAT_DIALOG_DATA);
   private dialogRef = inject(MatDialogRef<ExerciseDialogComponent>);
+  private metro = inject(MetronomeService);
+  private subs: Subscription[] = [];
 
   editingResource = false;
+  isPlaying = this.metro.isPlaying;
 
   form = this.fb.group({
     id: [this.data.id, Validators.required],
@@ -115,12 +131,41 @@ export class ExerciseDialogComponent {
     prepMeasures: [this.data.prepMeasures ?? 2]
   });
 
+  ngOnInit() {
+    this.subs.push(
+      this.form.get('beatStyle')?.valueChanges.subscribe(val => {
+        if (this.isPlaying() && val) {
+          this.metro.setBeatStyle(val as any);
+        }
+      }) as Subscription,
+      this.form.get('bpm')?.valueChanges.subscribe(val => {
+        if (this.isPlaying() && val && val > 0) {
+          this.metro.setBpm(val);
+        }
+      }) as Subscription
+    );
+  }
+
   save() {
     if (this.form.valid) this.dialogRef.close(this.form.getRawValue());
   }
 
   cancel() {
     this.dialogRef.close();
+  }
+
+  toggleMetronome() {
+    const bpm = this.form.get('bpm')?.value || 0;
+    if (bpm > 0) {
+      const style = this.form.get('beatStyle')?.value as any;
+      if (style) this.metro.setBeatStyle(style);
+      this.metro.toggle(bpm);
+    }
+  }
+
+  ngOnDestroy() {
+    this.metro.stop();
+    this.subs.forEach(s => s.unsubscribe());
   }
 
   onFileSelected(ev: Event) {
