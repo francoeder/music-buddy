@@ -14,6 +14,7 @@ export interface Training {
   _id: string;
   title: string;
   owner: string; // email
+  ownerName?: string; // display name
   ownerId?: string; // uid
   active: boolean;
   cover?: string;

@@ -121,6 +121,7 @@ export class TrainingService {
     await setDoc(ref, {
       title: training.title,
       owner: training.owner,
+      ownerName: user.displayName || user.email?.split('@')[0] || 'Unknown',
       ownerId: user.uid,
       active: training.active,
       cover: training.cover ?? '',
@@ -144,7 +145,9 @@ export class TrainingService {
     if (!user) return;
     const ref = doc(this.db, 'users', user.uid, 'trainings', trainingId);
     await updateDoc(ref, {
-      sharedWith: arrayUnion(email.toLowerCase())
+      sharedWith: arrayUnion(email.toLowerCase()),
+      owner: user.email, // Ensure owner email is set when sharing
+      ownerName: user.displayName || user.email?.split('@')[0] || 'Unknown' // Ensure owner name is set
     });
   }
 

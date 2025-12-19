@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,11 +6,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { TrainingService } from '../../services/training.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Training } from '../../models/training.model';
 import { ConfirmDialogComponent } from '../../components/dialog/confirm-dialog.component';
+import { SharedTrainingDialogComponent } from '../../components/dialog/shared-training-dialog.component';
 
 @Component({
   selector: 'app-trainings-list',
@@ -23,7 +24,7 @@ import { ConfirmDialogComponent } from '../../components/dialog/confirm-dialog.c
           @for (t of trainings(); track t._id) {
             <mat-card class="shadow hover:shadow-lg transition-shadow relative">
               @if (isShared(t)) {
-                <div class="absolute top-2 right-2 z-10 bg-white/90 rounded-full w-8 h-8 flex items-center justify-center shadow-md backdrop-blur-sm transition-transform hover:scale-105" matTooltip="Shared with you">
+                <div class="absolute top-2 right-2 z-10 bg-white/90 rounded-full w-8 h-8 flex items-center justify-center shadow-md backdrop-blur-sm transition-transform hover:scale-105 cursor-pointer" matTooltip="Shared with you" (click)="openSharedDetails(t)">
                   <mat-icon class="text-[#1A73A8] !w-5 !h-5 text-[20px] leading-none flex items-center justify-center">people</mat-icon>
                 </div>
               }
@@ -43,9 +44,9 @@ import { ConfirmDialogComponent } from '../../components/dialog/confirm-dialog.c
               </div>
               <mat-card-actions class="px-4 py-3 mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex items-center gap-3 flex-wrap">
-                  <button mat-raised-button color="primary" (click)="play(t)">
+                  <button mat-flat-button color="primary" (click)="play(t)">
                     <mat-icon>play_arrow</mat-icon>
-                    Play
+                    Start Training
                   </button>
                   <mat-slide-toggle [checked]="autoplay(t._id)" (change)="setAutoplay(t._id, $event.checked)">Autoplay</mat-slide-toggle>
                 </div>
@@ -85,12 +86,52 @@ export class TrainingsListComponent {
   private svc = inject(TrainingService);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private dialog = inject(MatDialog);
 
   trainings = computed(() => this.svc.getAll()());
   currentUser = computed(() => this.auth.user());
+  
+  private sharedIdToOpen = signal<string | null>(null);
+
+  constructor() {
+    this.route.queryParams.subscribe(params => {
+      if (params['shared']) {
+        this.sharedIdToOpen.set(params['shared']);
+      }
+    });
+
+    effect(() => {
+      const id = this.sharedIdToOpen();
+      const list = this.trainings();
+      if (id && list.length > 0) {
+        const t = list.find(x => x._id === id);
+        if (t) {
+          // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError if any
+          setTimeout(() => {
+            this.openSharedDetails(t);
+            this.sharedIdToOpen.set(null);
+            // Remove the query param from URL so it doesn't stay there
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { shared: null },
+              queryParamsHandling: 'merge',
+              replaceUrl: true
+            });
+          });
+        }
+      }
+    });
+  }
 
   autoplayById = signal<Record<string, boolean>>({});
+
+  openSharedDetails(t: Training) {
+    this.dialog.open(SharedTrainingDialogComponent, {
+      data: t,
+      width: '500px'
+    });
+  }
 
   autoplay(id: string) {
     return !!this.autoplayById()[id];

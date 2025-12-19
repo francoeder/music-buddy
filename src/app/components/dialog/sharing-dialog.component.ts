@@ -128,7 +128,7 @@ export class SharingDialogComponent {
   }
 
   copyLink() {
-    const url = `${window.location.origin}/trainings`;
+    const url = `${window.location.origin}/trainings?shared=${this.data._id}`;
     navigator.clipboard.writeText(url);
     this.snack.open('Link copied to clipboard', 'OK', { duration: 3000 });
   }

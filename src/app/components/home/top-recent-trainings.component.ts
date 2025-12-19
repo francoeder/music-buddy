@@ -11,6 +11,8 @@ import { UsageService } from '../../services/usage.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Training } from '../../models/training.model';
 import { TranslateModule } from '@ngx-translate/core';
+import { MatDialog } from '@angular/material/dialog';
+import { SharedTrainingDialogComponent } from '../dialog/shared-training-dialog.component';
 
 @Component({
   selector: 'app-top-recent-trainings',
@@ -24,7 +26,7 @@ import { TranslateModule } from '@ngx-translate/core';
           @for (t of trainings(); track t._id) {
             <mat-card class="shadow hover:shadow-lg transition-shadow relative">
               @if (isShared(t)) {
-                <div class="absolute top-2 right-2 z-10 bg-white/90 rounded-full w-8 h-8 flex items-center justify-center shadow-md backdrop-blur-sm transition-transform hover:scale-105" matTooltip="Shared with you">
+                <div class="absolute top-2 right-2 z-10 bg-white/90 rounded-full w-8 h-8 flex items-center justify-center shadow-md backdrop-blur-sm transition-transform hover:scale-105 cursor-pointer" matTooltip="Shared with you" (click)="openSharedDetails(t)">
                   <mat-icon class="text-[#1A73A8] !w-5 !h-5 text-[20px] leading-none flex items-center justify-center">people</mat-icon>
                 </div>
               }
@@ -44,9 +46,9 @@ import { TranslateModule } from '@ngx-translate/core';
               </div>
               <mat-card-actions class="px-4 py-3 mt-1 flex items-center justify-between">
                 <div class="flex items-center gap-3 flex-wrap">
-                  <button mat-raised-button color="primary" (click)="play(t)">
+                  <button mat-flat-button color="primary" (click)="play(t)">
                     <mat-icon>play_arrow</mat-icon>
-                    Play
+                    Start Training
                   </button>
                   <mat-slide-toggle [checked]="autoplay(t._id)" (change)="setAutoplay(t._id, $event.checked)">Autoplay</mat-slide-toggle>
                 </div>
@@ -65,6 +67,7 @@ export class TopRecentTrainingsComponent {
   private trainingsSvc = inject(TrainingService);
   private usageSvc = inject(UsageService);
   private auth = inject(AuthService);
+  private dialog = inject(MatDialog);
 
   ids = this.usageSvc.getRecentIds();
   trainings = computed(() => {
@@ -88,6 +91,13 @@ export class TopRecentTrainingsComponent {
 
   isShared(t: Training) {
     return t.ownerId && t.ownerId !== this.currentUser()?.uid;
+  }
+
+  openSharedDetails(t: Training) {
+    this.dialog.open(SharedTrainingDialogComponent, {
+      data: t,
+      width: '500px'
+    });
   }
 
   play(t: Training) {
