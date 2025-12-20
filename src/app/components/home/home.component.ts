@@ -10,7 +10,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { Training } from '../../models/training.model';
 import { ConfirmDialogComponent } from '../dialog/confirm-dialog.component';
 import { TopRecentTrainingsComponent } from './top-recent-trainings.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-home',
@@ -66,6 +66,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
+  private translate = inject(TranslateService);
   private installEvent: any = null;
   installAvailable = signal(false);
   isMobileView = signal(false);
@@ -83,10 +84,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   remove(t: Training) {
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Delete Training',
-        message: `Are you sure you want to delete "${t.title}"?`,
-        confirmText: 'Delete',
-        cancelText: 'Cancel'
+        title: this.translate.instant('dialogs.deleteTraining.title'),
+        message: this.translate.instant('dialogs.deleteTraining.message', { title: t.title }),
+        confirmText: this.translate.instant('dialogs.confirm.delete'),
+        cancelText: this.translate.instant('dialogs.confirm.cancel')
       },
       width: '360px'
     });

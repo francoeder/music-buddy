@@ -66,15 +66,56 @@
     "resource": "Recurso",
     "resourceUrl": "URL do recurso",
     "remove": "Remover",
-    "measures": "compasso(s)"
+    "measures": "compasso(s)",
+    "autoplay": "Reprodução automática",
+    "startTraining": "Iniciar Treino",
+    "exercisesCount": "Exercícios: {{count}}",
+    "newTraining": "Novo Treino",
+    "unknown": "Desconhecido",
+    "close": "Fechar"
+  },
+  "trainings": {
+    "noneCreated": "Nenhum treino criado ainda.",
+    "createFirst": "Criar primeiro treino"
   },
   "dialogs": {
+    "confirm": {
+      "title": "Confirmar",
+      "cancel": "Cancelar",
+      "delete": "Excluir"
+    },
+    "deleteTraining": {
+      "title": "Excluir Treino",
+      "message": "Tem certeza que deseja excluir \"{{title}}\"?"
+    },
     "training": {
       "title": "Treino"
     },
     "exercise": {
       "title": "Exercício",
       "prepMeasures": "Compassos de preparação"
+    },
+    "sharedTraining": {
+      "title": "Treino Compartilhado",
+      "message": "<strong>{{owner}}</strong> compartilhou este treino com você.",
+      "preview": "Prévia dos exercícios:"
+    },
+    "sharing": {
+      "title": "Compartilhar Treino",
+      "instruction": "Compartilhar com contas do Google (@gmail.com)",
+      "emailLabel": "E-mail",
+      "invalidEmail": "E-mail inválido",
+      "gmailRequired": "Deve ser um endereço Gmail",
+      "add": "Adicionar",
+      "whoHasAccess": "Quem tem acesso",
+      "notShared": "Ainda não compartilhado com ninguém.",
+      "copyLink": "Copiar Link de Acesso",
+      "accessGranted": "Acesso concedido",
+      "errorSharing": "Erro ao compartilhar treino",
+      "revokeConfirm": "Revogar acesso de {{email}}?",
+      "accessRevoked": "Acesso revogado",
+      "errorRevoking": "Erro ao revogar acesso",
+      "linkCopied": "Link copiado para a área de transferência"
     }
   },
   "prepMeasures": {

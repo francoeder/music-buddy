@@ -16,7 +16,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ExerciseDialogComponent } from '../../components/dialog/exercise-dialog.component';
 import { SharingDialogComponent } from '../../components/dialog/sharing-dialog.component';
 import { SafeResourcePipe } from '../../pipes/safe-resource.pipe';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MatMenuModule } from '@angular/material/menu';
 
 @Component({
@@ -154,6 +154,7 @@ export class TrainingEditorComponent {
   private svc = inject(TrainingService);
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
+  private translate = inject(TranslateService);
   @ViewChild('content') content?: ElementRef<HTMLElement>;
 
   editingCover = false;

@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { Training } from '../../models/training.model';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-shared-training-dialog',
@@ -14,13 +14,12 @@ import { TranslateModule } from '@ngx-translate/core';
   template: `
     <h2 mat-dialog-title class="flex items-center gap-2">
       <mat-icon class="text-indigo-600">share</mat-icon>
-      Shared Training
+      {{ 'dialogs.sharedTraining.title' | translate }}
     </h2>
     <mat-dialog-content>
       <div class="flex flex-col gap-4">
         <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-          <p class="text-indigo-900 font-medium">
-            <span class="font-bold">{{ ownerDisplay }}</span> has shared this training with you.
+          <p class="text-indigo-900 font-medium" [innerHTML]="'dialogs.sharedTraining.message' | translate:{owner: ownerDisplay}">
           </p>
         </div>
 
@@ -38,17 +37,17 @@ import { TranslateModule } from '@ngx-translate/core';
             <div class="flex items-center gap-4 text-sm text-gray-500 mt-1">
               <span class="flex items-center gap-1">
                 <mat-icon class="!w-4 !h-4 text-[16px] leading-none">fitness_center</mat-icon>
-                {{ data.exercises.length }} Exercises
+                {{ data.exercises.length }} {{ 'common.exercises' | translate }}
               </span>
               <span class="flex items-center gap-1" [class.text-green-600]="data.active" [class.text-red-500]="!data.active">
                 <mat-icon class="!w-4 !h-4 text-[16px] leading-none">{{ data.active ? 'check_circle' : 'cancel' }}</mat-icon>
-                {{ data.active ? 'Active' : 'Inactive' }}
+                {{ data.active ? ('common.active' | translate) : ('common.inactive' | translate) }}
               </span>
             </div>
           </div>
 
           <div class="border-t border-gray-200 pt-3 mt-1">
-            <h4 class="text-sm font-semibold text-gray-700 mb-2">Exercises Preview:</h4>
+            <h4 class="text-sm font-semibold text-gray-700 mb-2">{{ 'dialogs.sharedTraining.preview' | translate }}</h4>
             <div class="max-h-40 overflow-y-auto pr-2 space-y-2">
               @for (ex of data.exercises; track ex.id) {
                 <div class="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
@@ -62,10 +61,10 @@ import { TranslateModule } from '@ngx-translate/core';
       </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end" class="gap-2">
-      <button mat-stroked-button mat-dialog-close>Close</button>
+      <button mat-stroked-button mat-dialog-close>{{ 'common.close' | translate }}</button>
       <button mat-flat-button color="primary" (click)="play()">
         <mat-icon>play_arrow</mat-icon>
-        Start Training
+        {{ 'common.startTraining' | translate }}
       </button>
     </mat-dialog-actions>
   `
@@ -74,6 +73,7 @@ export class SharedTrainingDialogComponent {
   data = inject<Training>(MAT_DIALOG_DATA);
   private router = inject(Router);
   private dialogRef = inject(MatDialogRef<SharedTrainingDialogComponent>);
+  private translate = inject(TranslateService);
 
   get ownerDisplay(): string {
     const name = this.data.ownerName;
@@ -83,7 +83,7 @@ export class SharedTrainingDialogComponent {
       return `${name} (${email})`;
     }
     
-    return name || email || 'Unknown User';
+    return name || email || this.translate.instant('common.unknownUser');
   }
 
   play() {

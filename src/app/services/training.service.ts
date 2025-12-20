@@ -2,6 +2,7 @@ import { Injectable, inject, signal, effect } from '@angular/core';
 import { Training } from '../models/training.model';
 import { FIREBASE_DB } from '../app.config';
 import { AuthService } from '../core/services/auth.service';
+import { TranslateService } from '@ngx-translate/core';
 import { 
   type Firestore, 
   collection, 
@@ -22,6 +23,7 @@ import {
 export class TrainingService {
   private db: Firestore = inject(FIREBASE_DB);
   private auth = inject(AuthService);
+  private translate = inject(TranslateService);
   private trainingsSignal = signal<Training[]>([]);
   private unsubscribe: (() => void) | null = null;
 
@@ -147,7 +149,7 @@ export class TrainingService {
     await updateDoc(ref, {
       sharedWith: arrayUnion(email.toLowerCase()),
       owner: user.email, // Ensure owner email is set when sharing
-      ownerName: user.displayName || user.email?.split('@')[0] || 'Unknown' // Ensure owner name is set
+      ownerName: user.displayName || user.email?.split('@')[0] || this.translate.instant('common.unknown') // Ensure owner name is set
     });
   }
 

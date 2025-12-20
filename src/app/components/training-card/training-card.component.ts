@@ -10,11 +10,12 @@ import { Training } from '../../models/training.model';
 import { MatDialog } from '@angular/material/dialog';
 import { SharedTrainingDialogComponent } from '../dialog/shared-training-dialog.component';
 import { AuthService } from '../../core/services/auth.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-training-card',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatSlideToggleModule, MatTooltipModule],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatSlideToggleModule, MatTooltipModule, TranslateModule],
   template: `
     <mat-card class="shadow hover:shadow-lg transition-shadow relative">
       @if (training.cover) {
@@ -42,13 +43,13 @@ import { AuthService } from '../../core/services/auth.service';
             </div>
           }
         </div>
-        <div class="text-sm text-gray-500 mt-1">Exercises: {{ training.exercises.length }}</div>
+        <div class="text-sm text-gray-500 mt-1">{{ 'common.exercisesCount' | translate:{count: training.exercises.length} }}</div>
       </div>
-      <mat-card-actions class="px-4 py-3 mt-1 flex flex-wrap items-center justify-end gap-4">
-        <mat-slide-toggle [checked]="autoplay()" (change)="setAutoplay($event.checked)">Autoplay</mat-slide-toggle>
+      <mat-card-actions class="px-4 py-3 mt-1 flex flex-wrap items-center justify-between gap-4">
+        <mat-slide-toggle [checked]="autoplay()" (change)="setAutoplay($event.checked)">{{ 'common.autoplay' | translate }}</mat-slide-toggle>
         <button mat-flat-button color="primary" (click)="play()">
           <mat-icon>play_arrow</mat-icon>
-          Start Training
+          {{ 'common.startTraining' | translate }}
         </button>
       </mat-card-actions>
     </mat-card>

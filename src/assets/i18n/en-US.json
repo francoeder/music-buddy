@@ -66,15 +66,58 @@
     "resource": "Resource",
     "resourceUrl": "Resource URL",
     "remove": "Remove",
-    "measures": "measure(s)"
+    "measures": "measure(s)",
+    "autoplay": "Autoplay",
+    "startTraining": "Start Training",
+    "exercisesCount": "Exercises: {{count}}",
+    "newTraining": "New Training",
+    "unknown": "Unknown",
+    "close": "Close",
+    "inactive": "Inactive",
+    "unknownUser": "Unknown User"
+  },
+  "trainings": {
+    "noneCreated": "No trainings created yet.",
+    "createFirst": "Create first training"
   },
   "dialogs": {
+    "confirm": {
+      "title": "Confirm",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "deleteTraining": {
+      "title": "Delete Training",
+      "message": "Are you sure you want to delete \"{{title}}\"?"
+    },
     "training": {
       "title": "Training"
     },
     "exercise": {
       "title": "Exercise",
       "prepMeasures": "Preparation measures"
+    },
+    "sharedTraining": {
+      "title": "Shared Training",
+      "message": "<strong>{{owner}}</strong> has shared this training with you.",
+      "preview": "Exercises Preview:"
+    },
+    "sharing": {
+      "title": "Share Training",
+      "instruction": "Share with Google accounts (@gmail.com)",
+      "emailLabel": "Email",
+      "invalidEmail": "Invalid email",
+      "gmailRequired": "Must be a Gmail address",
+      "add": "Add",
+      "whoHasAccess": "Who has access",
+      "notShared": "Not shared with anyone yet.",
+      "copyLink": "Copy Access Link",
+      "accessGranted": "Access granted",
+      "errorSharing": "Error sharing training",
+      "revokeConfirm": "Revoke access for {{email}}?",
+      "accessRevoked": "Access revoked",
+      "errorRevoking": "Error revoking access",
+      "linkCopied": "Link copied to clipboard"
     }
   },
   "prepMeasures": {

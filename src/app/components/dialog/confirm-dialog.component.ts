@@ -3,20 +3,21 @@ import { CommonModule } from '@angular/common';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule, TranslateModule],
   template: `
     <div class="p-4">
-      <h2 class="text-lg font-semibold mb-2">{{ data.title || 'Confirm' }}</h2>
+      <h2 class="text-lg font-semibold mb-2">{{ data.title || ('dialogs.confirm.title' | translate) }}</h2>
       <p class="text-sm text-gray-700 mb-4">{{ data.message }}</p>
       <div class="flex justify-end gap-2">
-        <button mat-stroked-button (click)="cancel()">{{ data.cancelText || 'Cancel' }}</button>
+        <button mat-stroked-button (click)="cancel()">{{ data.cancelText || ('dialogs.confirm.cancel' | translate) }}</button>
         <button mat-raised-button color="warn" (click)="confirm()">
           <mat-icon>delete</mat-icon>
-          {{ data.confirmText || 'Delete' }}
+          {{ data.confirmText || ('dialogs.confirm.delete' | translate) }}
         </button>
       </div>
     </div>

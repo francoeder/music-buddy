@@ -13,6 +13,7 @@ import { Training } from '../../models/training.model';
 import { ConfirmDialogComponent } from '../../components/dialog/confirm-dialog.component';
 import { SharedTrainingDialogComponent } from '../../components/dialog/shared-training-dialog.component';
 import { TrainingCardComponent } from '../../components/training-card/training-card.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-trainings-list',
@@ -48,6 +49,7 @@ export class TrainingsListComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private dialog = inject(MatDialog);
+  private translate = inject(TranslateService);
 
   trainings = computed(() => this.svc.getAll()());
   currentUser = computed(() => this.auth.user());
@@ -103,10 +105,10 @@ export class TrainingsListComponent {
   remove(t: Training) {
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Delete Training',
-        message: `Are you sure you want to delete "${t.title}"?`,
-        confirmText: 'Delete',
-        cancelText: 'Cancel'
+        title: this.translate.instant('dialogs.deleteTraining.title'),
+        message: this.translate.instant('dialogs.deleteTraining.message', { title: t.title }),
+        confirmText: this.translate.instant('dialogs.confirm.delete'),
+        cancelText: this.translate.instant('dialogs.confirm.cancel')
       },
       width: '360px'
     });
